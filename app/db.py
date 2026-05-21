@@ -30,6 +30,19 @@ SCHEMA = [
         updated_at INTEGER NOT NULL
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS bookmarks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        workspace TEXT NOT NULL,
+        url TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        relpath TEXT NOT NULL,
+        captured_at INTEGER NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS bookmarks_workspace_idx ON bookmarks(workspace)",
+    "CREATE INDEX IF NOT EXISTS bookmarks_captured_at_idx ON bookmarks(captured_at)",
 ]
 
 

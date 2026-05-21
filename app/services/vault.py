@@ -20,8 +20,10 @@ Design notes:
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -276,6 +278,69 @@ def write_inbox(
     if attachments:
         summary += f" (+{len(attachments)})"
     _commit_and_push(spec, summary)
+    return abs_path
+
+
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slugify(s: str, max_len: int = 60) -> str:
+    s = s.lower()
+    s = _SLUG_RE.sub("-", s)
+    s = s.strip("-")
+    return s[:max_len].rstrip("-")
+
+
+def write_bookmark(
+    workspace: str,
+    url: str,
+    title: str,
+    description: str = "",
+    when: datetime | None = None,
+) -> Path:
+    """Write a bookmark note to Links/<slug>.md with YAML frontmatter.
+
+    Returns the absolute path. The vault-relative path is the second segment
+    of the return value if needed by the caller (use `.relative_to`).
+    """
+    spec = _resolve(workspace)
+    _ensure(spec)
+    when = when or datetime.now()
+
+    title = (title or url).strip() or url
+    description = (description or "").strip()
+    base_slug = _slugify(title) or when.strftime("%Y-%m-%dT%H-%M-%S")
+    relpath = Path("Links") / f"{base_slug}.md"
+    abs_path = spec.path / relpath
+    if abs_path.exists():
+        i = 2
+        while True:
+            relpath = Path("Links") / f"{base_slug}-{i}.md"
+            abs_path = spec.path / relpath
+            if not abs_path.exists():
+                break
+            i += 1
+    abs_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fm: list[str] = ["---"]
+    fm.append(f"url: {json.dumps(url)}")
+    fm.append(f"title: {json.dumps(title)}")
+    if description:
+        fm.append(f"description: {json.dumps(description)}")
+    fm.append(f"captured_at: {when.isoformat(timespec='seconds')}")
+    fm.append("tags: [link]")
+    fm.append("---")
+    fm.append("")
+    fm.append(f"# {title}")
+    fm.append("")
+    if description:
+        fm.append(f"> {description}")
+        fm.append("")
+    fm.append(f"<{url}>")
+    fm.append("")
+    abs_path.write_text("\n".join(fm), encoding="utf-8")
+
+    _commit_and_push(spec, f"link: {title[:60]}")
     return abs_path
 
 

@@ -1,0 +1,17 @@
+<ul class="bookmark-list" id="bookmark-list-{{ workspace if workspace is defined else 'x' }}">
+  {% for b in bookmarks %}
+    <li class="bookmark-item">
+      <a class="bookmark-title" href="{{ b.url }}" target="_blank" rel="noopener noreferrer">{{ b.title }}</a>
+      {% if b.description %}
+        <p class="bookmark-desc muted">{{ b.description }}</p>
+      {% endif %}
+      <p class="bookmark-meta muted">
+        <span class="bookmark-host">{{ b.url.split('/')[2] if '/' in b.url else b.url }}</span>
+      </p>
+    </li>
+  {% else %}
+    <li class="bookmark-empty muted">
+      {% if q %}No bookmarks matching "{{ q }}".{% else %}No bookmarks yet — paste a URL above.{% endif %}
+    </li>
+  {% endfor %}
+</ul>

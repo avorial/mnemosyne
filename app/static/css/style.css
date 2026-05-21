@@ -306,6 +306,56 @@ form.inline { display: inline; }
 }
 .file-chip .remove:hover { color: var(--danger); background: transparent; }
 
+/* Bookmark widget */
+.bookmark-form input[type="url"] { width: 100%; }
+.bookmark-list-wrap {
+  margin-top: 0.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+}
+.bookmark-search {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.6rem;
+}
+.bookmark-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.bookmark-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.bookmark-item:last-child { border-bottom: none; }
+.bookmark-title {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+}
+.bookmark-desc {
+  margin: 0.15rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bookmark-meta { margin: 0.15rem 0 0; font-size: 0.7rem; }
+.bookmark-host {
+  padding: 0.05rem 0.4rem;
+  background: var(--surface-2);
+  border-radius: 3px;
+}
+.bookmark-empty { padding: 1rem 0; text-align: center; }
+
 /* Show a subtle in-flight indicator when an HTMX form is submitting */
 .htmx-request .widget-form button[type="submit"] {
   opacity: 0.6;

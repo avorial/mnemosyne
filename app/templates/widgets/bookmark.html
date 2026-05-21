@@ -1,0 +1,33 @@
+<div class="widget bookmark">
+  <header class="widget-header">
+    <h3>Bookmark</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  {% if flash %}
+    <div class="flash flash-{{ flash.kind }}" data-autohide="3500">{{ flash.message }}</div>
+  {% endif %}
+  <form class="widget-form bookmark-form"
+        hx-post="/widgets/bookmark/save"
+        hx-target="closest .widget"
+        hx-swap="outerHTML"
+        method="post">
+    <input type="url" name="url" placeholder="https://… (paste a URL)" required autocomplete="off">
+    <div class="widget-actions">
+      <span class="muted">title &amp; description are fetched automatically</span>
+      <button type="submit">Save bookmark</button>
+    </div>
+  </form>
+  <div class="bookmark-list-wrap">
+    <input type="search"
+           class="bookmark-search"
+           name="q"
+           value="{{ q or '' }}"
+           placeholder="Search saved bookmarks…"
+           autocomplete="off"
+           hx-get="/widgets/bookmark/list"
+           hx-trigger="keyup changed delay:300ms, search"
+           hx-target="#bookmark-list-{{ workspace }}"
+           hx-swap="outerHTML">
+    {% include "widgets/_bookmark_list.html" %}
+  </div>
+</div>
