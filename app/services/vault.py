@@ -43,11 +43,6 @@ LOCAL_SSH_DIR = Path("/root/.ssh")
 LOCAL_KNOWN_HOSTS = LOCAL_SSH_DIR / "known_hosts"
 LOCAL_KEY_DIR = Path("/tmp/mnemosyne-keys")
 
-LFS_GITATTRIBUTES = """\
-# Attachments use Git LFS to keep the repo small.
-_attachments/** filter=lfs diff=lfs merge=lfs -text
-"""
-
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".heic"}
 
 
@@ -136,7 +131,14 @@ def _run_git(spec: WorkspaceSpec, *args: str, cwd: Path | None = None) -> str:
 
 
 def _ensure(spec: WorkspaceSpec) -> None:
-    """Idempotently make sure the vault is a working git+LFS checkout."""
+    """Idempotently make sure the vault is a working git checkout.
+
+    LFS is intentionally disabled here: on this setup LFS's pre-push hook
+    hangs (likely an LFS-API auth path that doesn't have what it needs from
+    a deploy-key context). For now binaries go in as regular git objects.
+    We `lfs uninstall --local` to make sure no stale hooks linger from older
+    deploys.
+    """
     with _ensure_lock:
         if spec.workspace in _ensured:
             return
@@ -148,26 +150,13 @@ def _ensure(spec: WorkspaceSpec) -> None:
             _run_git(spec, "clone", spec.remote, str(spec.path), cwd=spec.path.parent)
         _run_git(spec, "config", "user.name", GIT_AUTHOR_NAME)
         _run_git(spec, "config", "user.email", GIT_AUTHOR_EMAIL)
-        _run_git(spec, "lfs", "install", "--local")
-        _ensure_lfs_attributes(spec)
+        # Make sure no LFS pre-push hook is lurking from earlier deploys.
+        try:
+            _run_git(spec, "lfs", "uninstall", "--local")
+        except VaultError:
+            # `lfs uninstall --local` errors if LFS was never installed — fine.
+            pass
         _ensured.add(spec.workspace)
-
-
-def _ensure_lfs_attributes(spec: WorkspaceSpec) -> None:
-    gitattrs = spec.path / ".gitattributes"
-    needs_write = (
-        not gitattrs.exists()
-        or "_attachments" not in gitattrs.read_text(encoding="utf-8")
-    )
-    if not needs_write:
-        return
-    gitattrs.write_text(LFS_GITATTRIBUTES, encoding="utf-8")
-    _run_git(spec, "add", ".gitattributes")
-    status = _run_git(spec, "status", "--porcelain")
-    if not status.strip():
-        return
-    _run_git(spec, "commit", "-m", "Configure git-lfs tracking for _attachments/")
-    _run_git(spec, "push", "origin", "HEAD")
 
 
 def _resolve(workspace: str) -> WorkspaceSpec:
