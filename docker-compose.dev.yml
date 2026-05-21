@@ -1,0 +1,19 @@
+# Local development override: replaces the production external `mnemosyne`
+# volume (CIFS-mounted to TrueNAS) with a plain bind mount to ./data so the
+# stack can run on a Windows / macOS dev box.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+  app:
+    volumes:
+      - ./data:/mnt/mnemosyne
+
+  worker:
+    volumes:
+      - ./data:/mnt/mnemosyne
+
+volumes:
+  mnemosyne:
+    external: false

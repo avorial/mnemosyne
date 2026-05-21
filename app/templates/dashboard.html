@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ workspace|capitalize }} — Mnemosyne{% endblock %}
+
+{% block body %}
+<header class="topbar">
+  <div class="brand">Mnemosyne</div>
+  <nav class="workspace-toggle">
+    <form method="post" action="/workspace/personal" class="inline">
+      <button type="submit" class="ws {{ 'active' if workspace == 'personal' }}">Personal</button>
+    </form>
+    <form method="post" action="/workspace/work" class="inline">
+      <button type="submit" class="ws {{ 'active' if workspace == 'work' }}">Work</button>
+    </form>
+  </nav>
+  <div class="user">
+    <span class="muted">{{ email }}</span>
+    <form method="post" action="/auth/logout" class="inline">
+      <button type="submit" class="link">Sign out</button>
+    </form>
+  </div>
+</header>
+
+<main class="dashboard">
+  {% if widgets %}
+    <div class="grid-stack" id="grid"
+         data-layout='{{ layout|tojson }}'></div>
+  {% else %}
+    <div class="empty">
+      <h2>No widgets yet</h2>
+      <p class="muted">
+        Widgets ship in v0.2+. For now this is just the dashboard shell —
+        once Quick Note, Inbox, Bookmark, Todo, Calendar and GitHub Activity
+        widgets land, you can drag them onto this grid.
+      </p>
+      <p class="muted">Active workspace: <strong>{{ workspace }}</strong></p>
+    </div>
+  {% endif %}
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

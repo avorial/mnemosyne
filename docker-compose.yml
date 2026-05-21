@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    image: mnemosyne:latest
+    container_name: mnemosyne-app
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    env_file:
+      - .env
+    volumes:
+      - mnemosyne:/mnt/mnemosyne
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8100"]
+
+  worker:
+    image: mnemosyne:latest
+    container_name: mnemosyne-worker
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file:
+      - .env
+    volumes:
+      - mnemosyne:/mnt/mnemosyne
+    command: ["python", "-m", "worker.sync"]
+
+volumes:
+  mnemosyne:
+    external: true
