@@ -1,0 +1,20 @@
+<div class="widget quick-note">
+  <header class="widget-header">
+    <h3>Quick Note</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  {% if flash %}
+    <div class="flash flash-{{ flash.kind }}" data-autohide="3000">{{ flash.message }}</div>
+  {% endif %}
+  <form class="widget-form"
+        hx-post="/widgets/quick_note/save"
+        hx-target="closest .widget"
+        hx-swap="outerHTML"
+        method="post">
+    <textarea name="body" placeholder="Capture a thought…" required></textarea>
+    <div class="widget-actions">
+      <span class="muted">⌘+Enter to save</span>
+      <button type="submit">Save</button>
+    </div>
+  </form>
+</div>

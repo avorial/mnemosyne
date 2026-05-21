@@ -14,11 +14,16 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app = FastAPI(title="Mnemosyne")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
+# Discover widgets at import time, then mount their routers.
+widget_api.discover()
+for _w in widget_api.registry.all():
+    if _w.router is not None:
+        app.include_router(_w.router, prefix=f"/widgets/{_w.id}", tags=[_w.id])
+
 
 @app.on_event("startup")
 def _startup() -> None:
     db.init()
-    widget_api.discover()
 
 
 def current_session(request: Request) -> auth.Session:
@@ -32,21 +37,35 @@ def maybe_session(request: Request) -> auth.Session | None:
     return auth.session_from_request(request)
 
 
+def _workspace_from(request: Request) -> str:
+    ws = request.cookies.get("workspace", "personal")
+    return ws if ws in ("personal", "work") else "personal"
+
+
+def _annotated_layout(workspace: str) -> list[dict]:
+    """Drop layout entries whose widget is no longer registered."""
+    out = []
+    for it in widget_api.get_layout(workspace):
+        w = widget_api.registry.get(it.get("widget_id"))
+        if w is None:
+            continue
+        out.append({**it, "widget": w})
+    return out
+
+
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request, session: auth.Session | None = Depends(maybe_session)) -> Response:
     if session is None:
         return RedirectResponse("/login", status_code=302)
-    workspace = request.cookies.get("workspace", "personal")
-    if workspace not in ("personal", "work"):
-        workspace = "personal"
+    workspace = _workspace_from(request)
     return templates.TemplateResponse(
         "dashboard.html",
         {
             "request": request,
             "email": session.email,
             "workspace": workspace,
-            "widgets": widget_api.registry.all(),
-            "layout": widget_api.get_layout(workspace),
+            "all_widgets": widget_api.registry.all(),
+            "layout_items": _annotated_layout(workspace),
         },
     )
 
@@ -66,7 +85,7 @@ async def auth_request(email: str = Form(...)) -> Response:
 
 
 @app.get("/auth/verify")
-def auth_verify(token: str, response: Response) -> Response:
+def auth_verify(token: str) -> Response:
     session = auth.consume_magic_link(token)
     if session is None:
         raise HTTPException(status_code=400, detail="invalid or expired link")
@@ -97,12 +116,54 @@ async def save_layout(
     request: Request,
     session: auth.Session = Depends(current_session),
 ) -> Response:
-    workspace = request.cookies.get("workspace", "personal")
-    if workspace not in ("personal", "work"):
-        workspace = "personal"
+    workspace = _workspace_from(request)
     payload = await request.json()
-    widget_api.save_layout(workspace, payload)
+    if not isinstance(payload, list):
+        raise HTTPException(status_code=400, detail="expected a list")
+    # Preserve widget_id (and any other meta we set on the server) by merging
+    # with the stored layout. Gridstack's save() only emits {id,x,y,w,h}.
+    existing = {it.get("id"): it for it in widget_api.get_layout(workspace)}
+    merged = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        instance_id = item.get("id")
+        prev = existing.get(instance_id, {})
+        merged.append({
+            "id": instance_id,
+            "widget_id": prev.get("widget_id") or item.get("widget_id"),
+            "x": int(item.get("x", 0)),
+            "y": int(item.get("y", 0)),
+            "w": int(item.get("w", 1)),
+            "h": int(item.get("h", 1)),
+        })
+    widget_api.save_layout(workspace, merged)
     return Response(status_code=204)
+
+
+@app.post("/layout/add")
+def layout_add(
+    request: Request,
+    widget_id: str = Form(...),
+    session: auth.Session = Depends(current_session),
+) -> Response:
+    workspace = _workspace_from(request)
+    try:
+        widget_api.add_to_layout(workspace, widget_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/layout/remove")
+def layout_remove(
+    request: Request,
+    instance_id: str = Form(...),
+    session: auth.Session = Depends(current_session),
+) -> Response:
+    workspace = _workspace_from(request)
+    widget_api.remove_from_layout(workspace, instance_id)
+    return RedirectResponse("/", status_code=303)
 
 
 @app.get("/healthz")

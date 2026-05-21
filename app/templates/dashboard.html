@@ -13,6 +13,22 @@
     </form>
   </nav>
   <div class="user">
+    <details class="add-widget-menu">
+      <summary>+ Add widget</summary>
+      <ul>
+        {% for w in all_widgets %}
+        <li>
+          <form method="post" action="/layout/add" class="inline">
+            <input type="hidden" name="widget_id" value="{{ w.id }}">
+            <button type="submit" class="link">{{ w.title }}</button>
+          </form>
+          <span class="muted">{{ w.description }}</span>
+        </li>
+        {% else %}
+        <li class="muted">No widgets registered yet.</li>
+        {% endfor %}
+      </ul>
+    </details>
     <span class="muted">{{ email }}</span>
     <form method="post" action="/auth/logout" class="inline">
       <button type="submit" class="link">Sign out</button>
@@ -21,19 +37,32 @@
 </header>
 
 <main class="dashboard">
-  {% if widgets %}
-    <div class="grid-stack" id="grid"
-         data-layout='{{ layout|tojson }}'></div>
-  {% else %}
-    <div class="empty">
-      <h2>No widgets yet</h2>
-      <p class="muted">
-        Widgets ship in v0.2+. For now this is just the dashboard shell —
-        once Quick Note, Inbox, Bookmark, Todo, Calendar and GitHub Activity
-        widgets land, you can drag them onto this grid.
-      </p>
-      <p class="muted">Active workspace: <strong>{{ workspace }}</strong></p>
+  {% if layout_items %}
+  <div class="grid-stack" id="grid">
+    {% for item in layout_items %}
+    <div class="grid-stack-item"
+         gs-x="{{ item.x }}" gs-y="{{ item.y }}"
+         gs-w="{{ item.w }}" gs-h="{{ item.h }}"
+         gs-id="{{ item.id }}"
+         data-widget-id="{{ item.widget_id }}"
+         data-instance-id="{{ item.id }}">
+      <div class="grid-stack-item-content">
+        <form method="post" action="/layout/remove" class="inline widget-remove-form"
+              onsubmit="return confirm('Remove this widget?');">
+          <input type="hidden" name="instance_id" value="{{ item.id }}">
+          <button type="submit" class="widget-remove" title="Remove widget">×</button>
+        </form>
+        {% include "widgets/" ~ item.widget_id ~ ".html" %}
+      </div>
     </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <h2>No widgets on this dashboard yet</h2>
+    <p class="muted">Use the <strong>+ Add widget</strong> menu above to drop one in.</p>
+    <p class="muted">Active workspace: <strong>{{ workspace }}</strong></p>
+  </div>
   {% endif %}
 </main>
 {% endblock %}
