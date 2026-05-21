@@ -1,3 +1,22 @@
+{# Same lazy-load pattern as todo_asana: when this template is included
+   directly from the dashboard (no _render() called), `bookmarks` is
+   undefined and the saved list wouldn't appear. HTMX fetches the real
+   widget state on mount. #}
+{% if bookmarks is not defined %}
+<div class="widget bookmark">
+  <header class="widget-header">
+    <h3>Bookmark</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="muted"
+       hx-get="/widgets/bookmark/render"
+       hx-trigger="load"
+       hx-target="closest .widget"
+       hx-swap="outerHTML">
+    Loading…
+  </div>
+</div>
+{% else %}
 <div class="widget bookmark">
   <header class="widget-header">
     <h3>Bookmark</h3>
@@ -35,3 +54,4 @@
     {% include "widgets/_bookmark_list.html" %}
   </div>
 </div>
+{% endif %}

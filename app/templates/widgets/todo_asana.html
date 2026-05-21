@@ -1,3 +1,22 @@
+{# When `pat_configured` isn't in context, the dashboard included this
+   template directly without calling the widget's _render(). Lazy-load
+   the real state via HTMX so we don't render the "not configured"
+   branch with no actual configuration data. #}
+{% if pat_configured is not defined %}
+<div class="widget todo-asana">
+  <header class="widget-header">
+    <h3>Todos (Asana)</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="todo-loading muted"
+       hx-get="/widgets/todo_asana/render"
+       hx-trigger="load"
+       hx-target="closest .widget"
+       hx-swap="outerHTML">
+    Loading…
+  </div>
+</div>
+{% else %}
 <div class="widget todo-asana">
   <header class="widget-header">
     <h3>Todos (Asana)</h3>
@@ -77,3 +96,4 @@
     {% include "widgets/_todo_list.html" %}
   {% endif %}
 </div>
+{% endif %}

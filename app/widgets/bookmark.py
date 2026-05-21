@@ -48,6 +48,17 @@ def _render(
     )
 
 
+@router.get("/render", response_class=HTMLResponse)
+def render(
+    request: Request,
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if session is None:
+        return HTMLResponse(status_code=401, content="not authenticated")
+    workspace = _current_workspace(request)
+    return _render(request, workspace, None)
+
+
 @router.post("/save", response_class=HTMLResponse)
 async def save(
     request: Request,

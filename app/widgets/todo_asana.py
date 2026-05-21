@@ -75,6 +75,17 @@ def _auth(session: auth.Session | None) -> HTMLResponse | None:
     return None
 
 
+@router.get("/render", response_class=HTMLResponse)
+async def render(
+    request: Request,
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if (r := _auth(session)) is not None:
+        return r
+    workspace = _current_workspace(request)
+    return await _render(request, workspace)
+
+
 @router.post("/set_workspace", response_class=HTMLResponse)
 async def set_workspace(
     request: Request,
