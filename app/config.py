@@ -31,9 +31,22 @@ class Config:
     smtp_password: str
     smtp_from: str
 
+    asana_pat_file: Path
+
     @property
     def smtp_configured(self) -> bool:
         return bool(self.smtp_host and self.smtp_from)
+
+    @property
+    def asana_pat(self) -> str:
+        """Read the Asana PAT from disk on each call.
+
+        Tiny file, cheap read, never cached so rotating the secret on disk
+        takes effect without a restart.
+        """
+        if not self.asana_pat_file.exists():
+            return ""
+        return self.asana_pat_file.read_text().strip()
 
 
 def load() -> Config:
@@ -50,6 +63,7 @@ def load() -> Config:
         smtp_user=os.environ.get("SMTP_USER", ""),
         smtp_password=os.environ.get("SMTP_PASSWORD", ""),
         smtp_from=os.environ.get("SMTP_FROM", ""),
+        asana_pat_file=Path(os.environ.get("ASANA_PAT_FILE", "/mnt/mnemosyne/secrets/asana_pat")),
     )
 
 

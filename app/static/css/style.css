@@ -361,6 +361,66 @@ form.inline { display: inline; }
   background: var(--accent-soft);
 }
 
+/* Todo (Asana) widget */
+.todo-asana .todo-mapping-bar {
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+.todo-asana .todo-add {
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.todo-asana .todo-add input[type="text"] { flex: 1; }
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.todo-row:last-child { border-bottom: none; }
+.todo-row.done .todo-name {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.todo-name { flex: 1; }
+.todo-due {
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  background: var(--surface-2);
+  border-radius: 3px;
+}
+.todo-check {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1.1rem;
+  padding: 0 0.2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.todo-check:hover { background: transparent; color: var(--accent); }
+.todo-empty { padding: 1rem 0; text-align: center; }
+.todo-picker select {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+}
+
 /* Show a subtle in-flight indicator when an HTMX form is submitting */
 .htmx-request .widget-form button[type="submit"] {
   opacity: 0.6;

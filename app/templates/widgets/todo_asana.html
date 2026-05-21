@@ -1,0 +1,79 @@
+<div class="widget todo-asana">
+  <header class="widget-header">
+    <h3>Todos (Asana)</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  {% if flash %}
+    <div class="flash flash-{{ flash.kind }}" data-autohide="3500">{{ flash.message }}</div>
+  {% endif %}
+
+  {% if not pat_configured %}
+    <div class="todo-empty">
+      <p>Asana PAT not configured.</p>
+      <p class="muted">Expected at: <code>{{ pat_file }}</code></p>
+      <p class="muted">Drop a single-line file with your token there and restart the stack.</p>
+    </div>
+
+  {% elif mapping is none %}
+    {% if sync_error %}
+      <div class="flash flash-err">{{ sync_error }}</div>
+    {% endif %}
+    <div class="todo-picker">
+      <p class="muted">Pick the Asana workspace to mirror for <strong>{{ workspace }}</strong>:</p>
+      <form hx-post="/widgets/todo_asana/set_workspace"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            method="post">
+        <select name="asana_workspace_gid" id="awg-{{ workspace }}" required>
+          {% for w in available_workspaces %}
+            <option value="{{ w.gid }}" data-name="{{ w.name }}">{{ w.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="asana_workspace_name" value="">
+        <button type="submit">Map workspace</button>
+      </form>
+      <script>
+        (function () {
+          const wid = "awg-{{ workspace }}";
+          const sel = document.getElementById(wid);
+          if (!sel) return;
+          const hidden = sel.closest("form").querySelector('input[name="asana_workspace_name"]');
+          function syncName() {
+            const opt = sel.options[sel.selectedIndex];
+            hidden.value = opt ? opt.dataset.name : "";
+          }
+          sel.addEventListener("change", syncName);
+          syncName();
+        })();
+      </script>
+    </div>
+
+  {% else %}
+    <div class="todo-mapping-bar muted">
+      Linked: <strong>{{ mapping.asana_workspace_name }}</strong>
+      <form hx-post="/widgets/todo_asana/refresh"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline" method="post">
+        <button type="submit" class="link">refresh</button>
+      </form>
+      ·
+      <form hx-post="/widgets/todo_asana/clear_workspace"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline" method="post"
+            hx-confirm="Unmap this Mnemosyne workspace from {{ mapping.asana_workspace_name }}? Local data stays.">
+        <button type="submit" class="link">change…</button>
+      </form>
+    </div>
+    <form class="widget-form todo-add"
+          hx-post="/widgets/todo_asana/create"
+          hx-target="closest .widget"
+          hx-swap="outerHTML"
+          method="post">
+      <input type="text" name="name" placeholder="New task… (Enter to add)" required autocomplete="off">
+      <button type="submit">Add</button>
+    </form>
+    {% include "widgets/_todo_list.html" %}
+  {% endif %}
+</div>

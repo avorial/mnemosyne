@@ -1,0 +1,19 @@
+<ul class="todo-list">
+  {% for t in todos %}
+    <li class="todo-row{% if t.completed %} done{% endif %}">
+      <form hx-post="/widgets/todo_asana/toggle"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline" method="post">
+        <input type="hidden" name="gid" value="{{ t.gid }}">
+        <button type="submit" class="todo-check" aria-label="Toggle complete">
+          {% if t.completed %}☑{% else %}☐{% endif %}
+        </button>
+      </form>
+      <span class="todo-name">{{ t.name }}</span>
+      {% if t.due_on %}<span class="todo-due muted">{{ t.due_on }}</span>{% endif %}
+    </li>
+  {% else %}
+    <li class="todo-empty muted">No open tasks. Add one above.</li>
+  {% endfor %}
+</ul>
