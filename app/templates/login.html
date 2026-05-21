@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Sign in — Mnemosyne{% endblock %}
+{% block title %}Sign in &mdash; Mnemosyne{% endblock %}
 
 {% block body %}
 <main class="login">
   <h1>Mnemosyne</h1>
   {% if sent %}
-    <p class="note">If that email is allowlisted, a sign-in link has been sent.</p>
-    <p class="muted">Check your inbox for a link from Mnemosyne. It expires in 15 minutes.</p>
-    <p><a href="/login">Send another link</a></p>
+    <p class="note">If that address is allowlisted, a sign-in link is on its way.</p>
+    <p class="muted">It expires in fifteen minutes.</p>
+    <p class="muted"><a href="/login">Send another</a></p>
   {% else %}
     <form method="post" action="/auth/request">
       <label for="email">Email</label>
