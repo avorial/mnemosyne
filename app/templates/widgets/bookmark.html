@@ -10,10 +10,14 @@
         hx-post="/widgets/bookmark/save"
         hx-target="closest .widget"
         hx-swap="outerHTML"
+        hx-disabled-elt="find button"
         method="post">
-    <input type="url" name="url" placeholder="https://… (paste a URL)" required autocomplete="off">
+    <input type="text" inputmode="url" name="url"
+           placeholder="https://… (paste a URL)"
+           required autocomplete="off" spellcheck="false">
     <div class="widget-actions">
-      <span class="muted">title &amp; description are fetched automatically</span>
+      <span class="muted htmx-indicator">Fetching…</span>
+      <span class="muted save-hint">title &amp; description are fetched automatically</span>
       <button type="submit">Save bookmark</button>
     </div>
   </form>

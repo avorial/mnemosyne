@@ -6,6 +6,7 @@ under _attachments/. Everything commits to the active workspace's vault.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Annotated
@@ -63,8 +64,15 @@ async def save(
             content = await f.read()
             if not content:
                 continue
-            saved.append(vault.save_attachment(workspace, f.filename, content))
-        note_abs = vault.write_inbox(workspace, body, saved)
+            saved.append(
+                await asyncio.to_thread(
+                    vault.save_attachment, workspace, f.filename, content
+                )
+            )
+        # write_inbox does git add/commit/push — keep it off the event loop.
+        note_abs = await asyncio.to_thread(
+            vault.write_inbox, workspace, body, saved
+        )
         rel = note_abs.relative_to(vault.WORKSPACES[workspace].path)
         msg = f"Saved {rel.as_posix()}"
         if saved:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Annotated
@@ -69,8 +70,11 @@ async def save(
 
     title = meta.title or meta.url
     try:
-        abs_path = vault.write_bookmark(
-            workspace, meta.url, title, meta.description
+        # vault.write_bookmark runs blocking git subprocesses; push it off
+        # the event loop so other requests (incl. /healthz) stay responsive
+        # while git is talking to GitHub.
+        abs_path = await asyncio.to_thread(
+            vault.write_bookmark, workspace, meta.url, title, meta.description
         )
     except vault.VaultError as e:
         log.exception("bookmark write failed")

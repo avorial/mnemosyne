@@ -361,6 +361,12 @@ form.inline { display: inline; }
   opacity: 0.6;
   pointer-events: none;
 }
+.htmx-indicator {
+  display: none;
+  color: var(--accent);
+}
+.htmx-request .htmx-indicator { display: inline; }
+.htmx-request .save-hint { display: none; }
 
 /* Flash */
 .flash {
