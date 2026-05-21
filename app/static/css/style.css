@@ -1,25 +1,27 @@
-/* Mnemosyne — editorial-calm dark.
-   See DESIGN.md at project root for tokens, decisions, and rationale. */
+/* Mnemosyne — single-voice editorial dark.
+   One font (Inter), one accent. Hierarchy through weight + spacing,
+   not through mixing typefaces. See DESIGN.md for the full spec. */
 
 :root {
-  /* Color (OKLCH, warm-paper hue band 60–80) */
-  --bg:          oklch(0.15 0.012 60);
-  --surface:     oklch(0.19 0.013 65);
-  --surface-2:  oklch(0.24 0.012 65);
-  --border:      oklch(0.32 0.010 65);
-  --text:        oklch(0.95 0.008 80);
-  --text-quiet:  oklch(0.70 0.012 75);
-  --text-faint:  oklch(0.50 0.010 75);
-  --accent:      oklch(0.78 0.13 70);
-  --accent-soft: oklch(0.78 0.13 70 / 0.14);
-  --on-accent:   oklch(0.18 0.015 60);
+  /* Color (OKLCH). Hue band kept near 80 with very low chroma — the
+     palette should read as deliberate near-neutral, not "brown". Gaps
+     between layers are wide enough to be clearly distinct. */
+  --bg:          oklch(0.13 0.004 80);
+  --surface:     oklch(0.19 0.005 80);
+  --surface-2:  oklch(0.25 0.006 80);
+  --border:      oklch(0.32 0.008 80);
+  --text:        oklch(0.96 0.004 80);
+  --text-quiet:  oklch(0.68 0.008 80);
+  --text-faint:  oklch(0.48 0.008 80);
+  --accent:      oklch(0.80 0.14 72);
+  --accent-soft: oklch(0.80 0.14 72 / 0.12);
+  --on-accent:   oklch(0.17 0.010 70);
   --danger:      oklch(0.66 0.18 25);
 
-  /* Typography */
-  --font-sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  /* Type — one family, weight does the work. */
+  --font:        "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  /* Spacing (8px base, vary intentionally) */
+  /* Spacing (8px base, varied) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -51,12 +53,13 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.6;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.55;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv11";
 }
 
 a {
@@ -69,7 +72,7 @@ a {
 }
 a:hover { text-decoration-color: var(--accent); color: var(--accent); }
 
-.muted { color: var(--text-quiet); font-size: 14px; }
+.muted { color: var(--text-quiet); font-size: 13px; }
 .muted code {
   font-family: ui-monospace, "SF Mono", Consolas, monospace;
   font-size: 12px;
@@ -83,7 +86,7 @@ button, input, textarea, select {
   color: inherit;
 }
 
-/* Buttons — only two real styles: primary (accent) and quiet (text). */
+/* Buttons — primary (accent) and quiet (text). Two roles, no others. */
 button {
   background: transparent;
   border: 1px solid var(--border);
@@ -91,7 +94,9 @@ button {
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
   transition: border-color var(--t), background var(--t), color var(--t);
 }
 button:hover { border-color: var(--text-quiet); }
@@ -100,7 +105,7 @@ button[type="submit"] {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
-  font-weight: 500;
+  font-weight: 600;
 }
 button[type="submit"]:hover { filter: brightness(1.06); border-color: var(--accent); }
 
@@ -110,10 +115,12 @@ button.link {
   color: var(--text-quiet);
   padding: 0;
   font-size: inherit;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 button.link:hover { color: var(--accent); background: transparent; border-color: transparent; }
 
-/* Form fields — bottom hairline, no full border. */
+/* Form fields — bottom hairline only. */
 input[type="text"], input[type="email"], input[type="url"], input[type="search"], textarea {
   background: transparent;
   border: none;
@@ -122,6 +129,7 @@ input[type="text"], input[type="email"], input[type="url"], input[type="search"]
   padding: var(--space-2) 0;
   width: 100%;
   font-family: inherit;
+  font-size: 15px;
   color: var(--text);
   transition: border-bottom-color var(--t);
 }
@@ -139,68 +147,68 @@ select {
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   width: 100%;
+  font-size: 14px;
 }
 
 form.inline { display: inline; }
 
 /* Login */
 .login {
-  max-width: 380px;
-  margin: 12rem auto 0;
-  padding: var(--space-5);
+  max-width: 360px;
+  margin: 14rem auto 0;
+  padding: 0 var(--space-5);
 }
 .login h1 {
-  font-family: var(--font-serif);
-  font-size: 40px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  margin: 0 0 var(--space-5);
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--space-6);
+  color: var(--text);
 }
 .login label {
   display: block;
   margin-bottom: var(--space-2);
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--text-faint);
 }
 .login button[type="submit"] {
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
   width: 100%;
   padding: var(--space-3);
 }
 .login .note {
-  font-family: var(--font-serif);
-  font-style: italic;
-  color: var(--text-quiet);
-  border-left: 1px solid var(--accent);
-  padding-left: var(--space-3);
-  margin: var(--space-4) 0;
+  font-size: 14px;
+  color: var(--accent);
+  margin: 0 0 var(--space-3);
 }
 
 /* Topbar */
 .topbar {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-5);
   gap: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 .brand {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 .workspace-toggle { display: flex; gap: var(--space-1); }
 .workspace-toggle .ws {
   background: transparent;
   border: none;
   color: var(--text-quiet);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-sm);
+  letter-spacing: -0.005em;
 }
 .workspace-toggle .ws:hover { color: var(--text); border-color: transparent; }
 .workspace-toggle .ws.active {
@@ -210,8 +218,8 @@ form.inline { display: inline; }
 .user {
   display: flex;
   gap: var(--space-4);
-  align-items: baseline;
-  font-size: 14px;
+  align-items: center;
+  font-size: 13px;
   color: var(--text-quiet);
 }
 
@@ -224,7 +232,8 @@ form.inline { display: inline; }
   list-style: none;
   user-select: none;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   transition: color var(--t);
 }
 .add-widget-menu summary::-webkit-details-marker { display: none; }
@@ -242,7 +251,7 @@ form.inline { display: inline; }
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   min-width: 300px;
-  box-shadow: 0 12px 32px oklch(0 0 0 / 0.45);
+  box-shadow: 0 12px 32px oklch(0 0 0 / 0.55);
   z-index: 10;
 }
 .add-widget-menu li {
@@ -254,10 +263,10 @@ form.inline { display: inline; }
 }
 .add-widget-menu li:hover { background: var(--surface-2); }
 .add-widget-menu li button.link {
-  font-family: var(--font-serif);
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 .add-widget-menu li button.link:hover { color: var(--accent); }
 .add-widget-menu li .muted { font-size: 12px; }
@@ -265,22 +274,20 @@ form.inline { display: inline; }
 /* Dashboard */
 .dashboard { padding: var(--space-5); }
 .empty {
-  max-width: 540px;
-  margin: 7rem auto 0;
+  max-width: 480px;
+  margin: 8rem auto 0;
   text-align: center;
 }
 .empty h2 {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 28px;
-  letter-spacing: -0.01em;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
   margin: 0 0 var(--space-3);
   color: var(--text);
 }
-.empty p { color: var(--text-quiet); font-size: 15px; }
+.empty p { color: var(--text-quiet); font-size: 14px; }
 
-/* Gridstack — make the wrapper invisible, let widgets be the surfaces. */
+/* Gridstack wrapper invisible — widgets carry the surface. */
 .grid-stack-item-content {
   background: transparent;
   border: none;
@@ -289,42 +296,42 @@ form.inline { display: inline; }
   position: relative;
 }
 
-/* Widget chrome — surface block, header hairline only. No card outline. */
+/* Widget chrome — surface block, single hairline under header. */
 .widget {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--space-3) var(--space-4) var(--space-4);
+  padding: var(--space-4);
   background: var(--surface);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .widget-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   padding-bottom: var(--space-3);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
   border-bottom: 1px solid var(--border);
   cursor: move;
 }
 .widget-header h3 {
   margin: 0;
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: -0.005em;
   color: var(--text);
 }
 .ws-tag {
   font-size: 10px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-faint);
 }
 
-/* Widget remove (top-right X) */
+/* Remove (top-right X) */
 .widget-remove-form {
   position: absolute;
   top: var(--space-2);
@@ -335,13 +342,13 @@ form.inline { display: inline; }
 }
 .grid-stack-item-content:hover .widget-remove-form { opacity: 1; }
 .widget-remove {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   background: transparent;
   border: none;
   color: var(--text-faint);
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
   border-radius: var(--radius-sm);
 }
@@ -351,16 +358,14 @@ form.inline { display: inline; }
 .widget-form textarea { flex: 1; min-height: 60px; }
 .widget-actions {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
-/* Flash — italic Newsreader, no card. */
+/* Flash — single line, color-only, no card. */
 .flash {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 14px;
+  font-size: 13px;
   padding: 0;
   margin: 0 0 var(--space-3);
   color: var(--text-quiet);
@@ -372,8 +377,6 @@ form.inline { display: inline; }
 
 .htmx-indicator {
   display: none;
-  font-family: var(--font-serif);
-  font-style: italic;
   font-size: 13px;
   color: var(--text-quiet);
 }
@@ -407,9 +410,7 @@ form.inline { display: inline; }
 .dropzone-hint {
   margin: 0;
   color: var(--text-faint);
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
 }
 .file-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
@@ -420,7 +421,7 @@ form.inline { display: inline; }
   padding: var(--space-1) var(--space-3);
   background: var(--surface-2);
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 12px;
 }
 .file-chip .name {
   overflow: hidden;
@@ -440,7 +441,7 @@ form.inline { display: inline; }
 .file-chip .remove:hover { color: var(--danger); background: transparent; border-color: transparent; }
 
 /* Bookmark widget */
-.bookmark-form input[type="text"] { font-size: 16px; padding: var(--space-3) 0; }
+.bookmark-form input[type="text"] { font-size: 15px; padding: var(--space-3) 0; }
 .bookmark-list-wrap {
   margin-top: var(--space-4);
   flex: 1;
@@ -449,19 +450,19 @@ form.inline { display: inline; }
   gap: var(--space-3);
   min-height: 0;
 }
-.bookmark-search { font-size: 14px; }
+.bookmark-search { font-size: 13px; }
 .bookmark-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; min-height: 0; }
 .bookmark-item { padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
 .bookmark-item:last-child { border-bottom: none; }
 .bookmark-title {
   display: block;
-  font-family: var(--font-serif);
   font-weight: 500;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text);
   text-decoration: none;
   margin-bottom: var(--space-1);
   letter-spacing: -0.005em;
+  line-height: 1.35;
 }
 .bookmark-title:hover { color: var(--accent); text-decoration: none; }
 .bookmark-desc {
@@ -470,11 +471,11 @@ form.inline { display: inline; }
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-quiet);
   line-height: 1.45;
 }
-.bookmark-meta { margin: var(--space-1) 0 0; font-size: 11px; }
+.bookmark-meta { margin: var(--space-1) 0 0; font-size: 10px; }
 .bookmark-host {
   letter-spacing: 0.06em;
   text-transform: lowercase;
@@ -483,8 +484,7 @@ form.inline { display: inline; }
 .bookmark-empty {
   padding: var(--space-5) 0;
   text-align: center;
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-size: 13px;
   color: var(--text-faint);
 }
 .widget.bookmark.url-dragover {
@@ -501,7 +501,7 @@ form.inline { display: inline; }
 .todo-asana .todo-add {
   flex-direction: row;
   gap: var(--space-3);
-  align-items: baseline;
+  align-items: center;
   margin-bottom: var(--space-3);
 }
 .todo-asana .todo-add input[type="text"] { flex: 1; }
@@ -509,7 +509,7 @@ form.inline { display: inline; }
 .todo-list { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; min-height: 0; }
 .todo-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) 0;
 }
@@ -518,9 +518,9 @@ form.inline { display: inline; }
   text-decoration: line-through;
   text-decoration-color: var(--text-faint);
 }
-.todo-name { flex: 1; font-size: 15px; }
+.todo-name { flex: 1; font-size: 14px; }
 .todo-due {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.04em;
   color: var(--text-faint);
 }
@@ -539,15 +539,13 @@ form.inline { display: inline; }
 .todo-empty {
   padding: var(--space-5) 0;
   text-align: center;
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-size: 13px;
   color: var(--text-faint);
 }
-.todo-picker p { color: var(--text-quiet); margin: 0 0 var(--space-3); font-size: 14px; }
+.todo-picker p { color: var(--text-quiet); margin: 0 0 var(--space-3); font-size: 13px; }
 .todo-loading {
   padding: var(--space-5) 0;
   text-align: center;
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-size: 13px;
   color: var(--text-faint);
 }
