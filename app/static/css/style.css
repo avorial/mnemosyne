@@ -355,6 +355,11 @@ form.inline { display: inline; }
   border-radius: 3px;
 }
 .bookmark-empty { padding: 1rem 0; text-align: center; }
+.widget.bookmark.url-dragover {
+  outline: 2px dashed var(--accent);
+  outline-offset: -4px;
+  background: var(--accent-soft);
+}
 
 /* Show a subtle in-flight indicator when an HTMX form is submitting */
 .htmx-request .widget-form button[type="submit"] {

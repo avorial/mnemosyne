@@ -167,10 +167,67 @@
     input.dispatchEvent(new Event("change"));
   });
 
+  // ---- Drop a URL onto the Bookmark widget -----------------------------
+  function bindBookmarkDrops(scope) {
+    (scope || document).querySelectorAll(".widget.bookmark").forEach((widget) => {
+      if (widget.dataset.urlDropBound === "1") return;
+      widget.dataset.urlDropBound = "1";
+
+      const form = widget.querySelector("form.bookmark-form");
+      if (!form) return;
+      const input = form.querySelector('input[name="url"]');
+      if (!input) return;
+
+      ["dragenter", "dragover"].forEach((evt) =>
+        widget.addEventListener(evt, (e) => {
+          // Only react to URL/text drags, not file drags.
+          const types = e.dataTransfer && Array.from(e.dataTransfer.types || []);
+          if (!types) return;
+          if (
+            types.includes("text/uri-list") ||
+            types.includes("text/x-moz-url") ||
+            types.includes("text/plain")
+          ) {
+            e.preventDefault();
+            widget.classList.add("url-dragover");
+          }
+        })
+      );
+      ["dragleave", "dragend", "drop"].forEach((evt) =>
+        widget.addEventListener(evt, (e) => {
+          if (evt === "dragleave" && widget.contains(e.relatedTarget)) return;
+          widget.classList.remove("url-dragover");
+        })
+      );
+      widget.addEventListener("drop", (e) => {
+        const dt = e.dataTransfer;
+        if (!dt) return;
+        let raw =
+          dt.getData("text/uri-list") ||
+          dt.getData("text/x-moz-url") ||
+          dt.getData("text/plain");
+        if (!raw) return;
+        // text/uri-list and text/x-moz-url can have multiple lines; take the
+        // first non-empty, non-comment line.
+        const url = raw
+          .split(/\r?\n/)
+          .map((s) => s.trim())
+          .find((s) => s && !s.startsWith("#"));
+        if (!url) return;
+        e.preventDefault();
+        input.value = url;
+        if (form.requestSubmit) form.requestSubmit();
+        else form.submit();
+      });
+    });
+  }
+
   bindAutoHide();
   bindDropzones();
+  bindBookmarkDrops();
   document.body.addEventListener("htmx:afterSwap", (e) => {
     bindAutoHide(e.target);
     bindDropzones(e.target);
+    bindBookmarkDrops(e.target);
   });
 })();
