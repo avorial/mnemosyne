@@ -10,7 +10,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       MAGIC_LINK_EMAIL: ${MAGIC_LINK_EMAIL}
       BASE_URL: ${BASE_URL}
-      DB_PATH: ${DB_PATH:-/mnt/mnemosyne/mnemosyne.db}
+      DB_PATH: ${DB_PATH:-/var/lib/mnemosyne/mnemosyne.db}
       VAULT_PERSONAL_PATH: ${VAULT_PERSONAL_PATH:-/mnt/mnemosyne/vault-notes}
       VAULT_WORK_PATH: ${VAULT_WORK_PATH:-/mnt/mnemosyne/vault-work}
       SECRETS_PATH: ${SECRETS_PATH:-/mnt/mnemosyne/secrets}
@@ -23,6 +23,7 @@ services:
       ASANA_PAT_FILE: ${ASANA_PAT_FILE:-/mnt/mnemosyne/secrets/asana_pat}
     volumes:
       - mnemosyne:/mnt/mnemosyne
+      - mnemosyne-db:/var/lib/mnemosyne
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8100"]
 
   worker:
@@ -35,7 +36,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       MAGIC_LINK_EMAIL: ${MAGIC_LINK_EMAIL}
       BASE_URL: ${BASE_URL}
-      DB_PATH: ${DB_PATH:-/mnt/mnemosyne/mnemosyne.db}
+      DB_PATH: ${DB_PATH:-/var/lib/mnemosyne/mnemosyne.db}
       VAULT_PERSONAL_PATH: ${VAULT_PERSONAL_PATH:-/mnt/mnemosyne/vault-notes}
       VAULT_WORK_PATH: ${VAULT_WORK_PATH:-/mnt/mnemosyne/vault-work}
       SECRETS_PATH: ${SECRETS_PATH:-/mnt/mnemosyne/secrets}
@@ -43,8 +44,11 @@ services:
       ASANA_PAT_FILE: ${ASANA_PAT_FILE:-/mnt/mnemosyne/secrets/asana_pat}
     volumes:
       - mnemosyne:/mnt/mnemosyne
+      - mnemosyne-db:/var/lib/mnemosyne
     command: ["python", "-m", "worker.sync"]
 
 volumes:
   mnemosyne:
     external: true
+  mnemosyne-db:
+    driver: local
