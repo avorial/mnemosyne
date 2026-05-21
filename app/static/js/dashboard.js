@@ -8,6 +8,7 @@
       margin: 8,
       column: 12,
       float: false,
+      handle: ".widget-header",
     },
     gridEl
   );
