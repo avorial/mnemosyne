@@ -1,0 +1,27 @@
+<div class="widget inbox">
+  <header class="widget-header">
+    <h3>Inbox</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  {% if flash %}
+    <div class="flash flash-{{ flash.kind }}" data-autohide="3500">{{ flash.message }}</div>
+  {% endif %}
+  <form class="widget-form inbox-form"
+        hx-post="/widgets/inbox/save"
+        hx-encoding="multipart/form-data"
+        hx-target="closest .widget"
+        hx-swap="outerHTML"
+        method="post"
+        enctype="multipart/form-data">
+    <textarea name="body" placeholder="Drop, paste, or type…"></textarea>
+    <div class="dropzone" tabindex="0">
+      <p class="dropzone-hint">📎 Drop files here · paste images · click to choose</p>
+      <input type="file" name="files" multiple hidden>
+      <ul class="file-chips" aria-live="polite"></ul>
+    </div>
+    <div class="widget-actions">
+      <span class="muted">Shift+Enter to save</span>
+      <button type="submit">Save to Inbox</button>
+    </div>
+  </form>
+</div>

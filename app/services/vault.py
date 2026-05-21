@@ -1,8 +1,8 @@
 """Git-backed Obsidian vault service.
 
 Each workspace ('personal' / 'work') has its own checkout of a private GitHub
-repo. Widgets call this service to append/write markdown files, which are
-then committed and pushed.
+repo. Widgets call this service to append/write markdown files (and binary
+attachments tracked via Git LFS), which are then committed and pushed.
 
 Design notes:
 - Deploy keys live on the CIFS-mounted secrets folder (read-only as far as
@@ -14,6 +14,8 @@ Design notes:
   pointing at /root/.ssh/known_hosts which is always writable.
 - StrictHostKeyChecking=accept-new is enough here: github.com's host keys
   are public, and we trust-on-first-use.
+- _attachments/** is tracked via Git LFS so binaries don't bloat the repo.
+  .gitattributes is written on first clone if missing.
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ import os
 import shutil
 import subprocess
 import threading
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +40,13 @@ GIT_AUTHOR_EMAIL = "noreply@mnemosyne.avorial.com"
 LOCAL_SSH_DIR = Path("/root/.ssh")
 LOCAL_KNOWN_HOSTS = LOCAL_SSH_DIR / "known_hosts"
 LOCAL_KEY_DIR = Path("/tmp/mnemosyne-keys")
+
+LFS_GITATTRIBUTES = """\
+# Attachments use Git LFS to keep the repo small.
+_attachments/** filter=lfs diff=lfs merge=lfs -text
+"""
+
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".heic"}
 
 
 @dataclass(frozen=True)
@@ -72,11 +82,7 @@ _ensured: set[str] = set()
 
 
 def _local_key_for(spec: WorkspaceSpec) -> Path:
-    """Copy the deploy key from CIFS to a local path with strict perms.
-
-    SSH refuses keys with mode > 0600 — and CIFS mounts often won't honor
-    chmod, so the canonical fix is to use a local copy.
-    """
+    """Copy the deploy key from CIFS to a local path with strict perms."""
     src = config.secrets_path / spec.deploy_key_filename
     if not src.exists():
         raise VaultError(f"deploy key not found at {src}")
@@ -115,7 +121,7 @@ def _run_git(spec: WorkspaceSpec, *args: str, cwd: Path | None = None) -> str:
             check=True,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,
         )
     except subprocess.CalledProcessError as e:
         raise VaultError(
@@ -128,7 +134,7 @@ def _run_git(spec: WorkspaceSpec, *args: str, cwd: Path | None = None) -> str:
 
 
 def _ensure(spec: WorkspaceSpec) -> None:
-    """Idempotently make sure the vault is a working git checkout."""
+    """Idempotently make sure the vault is a working git+LFS checkout."""
     with _ensure_lock:
         if spec.workspace in _ensured:
             return
@@ -140,7 +146,26 @@ def _ensure(spec: WorkspaceSpec) -> None:
             _run_git(spec, "clone", spec.remote, str(spec.path), cwd=spec.path.parent)
         _run_git(spec, "config", "user.name", GIT_AUTHOR_NAME)
         _run_git(spec, "config", "user.email", GIT_AUTHOR_EMAIL)
+        _run_git(spec, "lfs", "install", "--local")
+        _ensure_lfs_attributes(spec)
         _ensured.add(spec.workspace)
+
+
+def _ensure_lfs_attributes(spec: WorkspaceSpec) -> None:
+    gitattrs = spec.path / ".gitattributes"
+    needs_write = (
+        not gitattrs.exists()
+        or "_attachments" not in gitattrs.read_text(encoding="utf-8")
+    )
+    if not needs_write:
+        return
+    gitattrs.write_text(LFS_GITATTRIBUTES, encoding="utf-8")
+    _run_git(spec, "add", ".gitattributes")
+    status = _run_git(spec, "status", "--porcelain")
+    if not status.strip():
+        return
+    _run_git(spec, "commit", "-m", "Configure git-lfs tracking for _attachments/")
+    _run_git(spec, "push", "origin", "HEAD")
 
 
 def _resolve(workspace: str) -> WorkspaceSpec:
@@ -150,11 +175,21 @@ def _resolve(workspace: str) -> WorkspaceSpec:
     return spec
 
 
-def append_to_daily(workspace: str, body: str, when: datetime | None = None) -> Path:
-    """Append `body` under a `## HH:MM` heading in today's daily note.
+def _safe_ext(filename: str | None) -> str:
+    if not filename:
+        return ""
+    ext = Path(filename).suffix.lower()
+    if not ext:
+        return ""
+    if not all(c.isalnum() or c == "." for c in ext):
+        return ""
+    if len(ext) > 12:
+        return ""
+    return ext
 
-    Returns the absolute path of the file written.
-    """
+
+def append_to_daily(workspace: str, body: str, when: datetime | None = None) -> Path:
+    """Append `body` under a `## HH:MM` heading in today's daily note."""
     body = body.strip()
     if not body:
         raise VaultError("body is empty")
@@ -176,6 +211,71 @@ def append_to_daily(workspace: str, body: str, when: datetime | None = None) -> 
             f.write(f"\n## {time_label}\n\n{body}\n")
 
     _commit_and_push(spec, f"quick-note: {date_slug} {time_label}")
+    return abs_path
+
+
+def save_attachment(workspace: str, filename: str | None, content: bytes) -> Path:
+    """Write a binary attachment to _attachments/YYYY/MM/<uuid>.<ext>.
+
+    Returns the vault-relative path (e.g. _attachments/2026/05/abc123.png).
+    Does NOT commit — the caller commits along with the inbox note that
+    references the attachment.
+    """
+    if not content:
+        raise VaultError("empty attachment")
+    spec = _resolve(workspace)
+    _ensure(spec)
+    now = datetime.now()
+    subdir = Path("_attachments") / now.strftime("%Y") / now.strftime("%m")
+    abs_subdir = spec.path / subdir
+    abs_subdir.mkdir(parents=True, exist_ok=True)
+    ext = _safe_ext(filename)
+    rel = subdir / f"{uuid.uuid4().hex}{ext}"
+    (spec.path / rel).write_bytes(content)
+    return rel
+
+
+def write_inbox(
+    workspace: str,
+    body: str,
+    attachments: list[Path] | None = None,
+    when: datetime | None = None,
+) -> Path:
+    """Create an Inbox/<timestamp>.md note with body + embedded attachments."""
+    body = (body or "").strip()
+    attachments = attachments or []
+    if not body and not attachments:
+        raise VaultError("inbox entry needs text or at least one attachment")
+
+    spec = _resolve(workspace)
+    _ensure(spec)
+    when = when or datetime.now()
+    slug = when.strftime("%Y-%m-%dT%H-%M-%S")
+    relpath = Path("Inbox") / f"{slug}.md"
+    abs_path = spec.path / relpath
+    abs_path.parent.mkdir(parents=True, exist_ok=True)
+
+    lines: list[str] = []
+    lines.append("---")
+    lines.append(f"created: {when.isoformat(timespec='seconds')}")
+    lines.append("tags: [inbox]")
+    lines.append("---")
+    lines.append("")
+    if body:
+        lines.append(body)
+        lines.append("")
+    for att in attachments:
+        att_posix = att.as_posix()
+        if att.suffix.lower() in IMAGE_EXTS:
+            lines.append(f"![[{att_posix}]]")
+        else:
+            lines.append(f"[{att.name}]({att_posix})")
+    abs_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    summary = f"inbox: {slug}"
+    if attachments:
+        summary += f" (+{len(attachments)})"
+    _commit_and_push(spec, summary)
     return abs_path
 
 
