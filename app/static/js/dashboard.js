@@ -32,9 +32,10 @@
   }
   grid.on("change", persist);
 
-  // Submit Quick Note on Cmd/Ctrl + Enter.
+  // Submit the focused widget form on Shift+Enter. Plain Enter still inserts
+  // a newline in the textarea.
   document.addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if (e.shiftKey && e.key === "Enter") {
       const ta = document.activeElement;
       if (ta && ta.tagName === "TEXTAREA") {
         const form = ta.closest("form");
