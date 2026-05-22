@@ -1,27 +1,29 @@
-/* Mnemosyne — single-voice editorial dark.
-   One font (Inter), one accent. Hierarchy through weight + spacing,
-   not through mixing typefaces. See DESIGN.md for the full spec. */
+/* Mnemosyne — pinewood light.
+   Background is the tan/wood surface; widget tiles sit as slightly
+   darker wood inset into it. One serif moment (brand wordmark in
+   Georgia). Accent is a deep burnt-sienna reserved for the single
+   consequence per screen: the submit button. See DESIGN.md. */
 
 :root {
-  /* Color (OKLCH). Hue band kept near 80 with very low chroma — the
-     palette should read as deliberate near-neutral, not "brown". Gaps
-     between layers are wide enough to be clearly distinct. */
-  --bg:          oklch(0.13 0.004 80);
-  --surface:     oklch(0.19 0.005 80);
-  --surface-2:  oklch(0.25 0.006 80);
-  --border:      oklch(0.32 0.008 80);
-  --text:        oklch(0.96 0.004 80);
-  --text-quiet:  oklch(0.68 0.008 80);
-  --text-faint:  oklch(0.48 0.008 80);
-  --accent:      oklch(0.80 0.14 72);
-  --accent-soft: oklch(0.80 0.14 72 / 0.12);
-  --on-accent:   oklch(0.17 0.010 70);
-  --danger:      oklch(0.66 0.18 25);
+  /* Color (OKLCH). Pinewood: warm tan bg, darker tan widgets,
+     visible wood-toned hairlines. */
+  --bg:          oklch(0.84 0.045 75);
+  --surface:     oklch(0.78 0.050 75);
+  --surface-2:  oklch(0.73 0.052 75);
+  --border:      oklch(0.62 0.055 70);
+  --text:        oklch(0.22 0.020 60);
+  --text-quiet:  oklch(0.42 0.020 65);
+  --text-faint:  oklch(0.55 0.022 70);
+  --accent:      oklch(0.45 0.12  35);
+  --accent-soft: oklch(0.45 0.12  35 / 0.10);
+  --on-accent:   oklch(0.96 0.012 80);
+  --danger:      oklch(0.45 0.18  25);
 
-  /* Type — one family, weight does the work. */
+  /* Type */
   --font:        "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-brand:  Georgia, "Iowan Old Style", "Times New Roman", serif;
 
-  /* Spacing (8px base, varied) */
+  /* Spacing */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -86,7 +88,7 @@ button, input, textarea, select {
   color: inherit;
 }
 
-/* Buttons — primary (accent) and quiet (text). Two roles, no others. */
+/* Buttons — primary (accent, the one moment of consequence) and quiet (text). */
 button {
   background: transparent;
   border: 1px solid var(--border);
@@ -107,7 +109,7 @@ button[type="submit"] {
   color: var(--on-accent);
   font-weight: 600;
 }
-button[type="submit"]:hover { filter: brightness(1.06); border-color: var(--accent); }
+button[type="submit"]:hover { filter: brightness(1.08); border-color: var(--accent); }
 
 button.link {
   background: transparent;
@@ -118,7 +120,7 @@ button.link {
   font-weight: 400;
   letter-spacing: 0;
 }
-button.link:hover { color: var(--accent); background: transparent; border-color: transparent; }
+button.link:hover { color: var(--text); background: transparent; border-color: transparent; }
 
 /* Form fields — bottom hairline only. */
 input[type="text"], input[type="email"], input[type="url"], input[type="search"], textarea {
@@ -136,7 +138,7 @@ input[type="text"], input[type="email"], input[type="url"], input[type="search"]
 input::placeholder, textarea::placeholder { color: var(--text-faint); }
 input:focus, textarea:focus {
   outline: none;
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--text);
 }
 textarea { resize: vertical; min-height: 80px; line-height: 1.55; }
 
@@ -159,9 +161,11 @@ form.inline { display: inline; }
   padding: 0 var(--space-5);
 }
 .login h1 {
-  font-size: 32px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
+  font-family: var(--font-brand);
+  font-size: 36px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.005em;
   margin: 0 0 var(--space-6);
   color: var(--text);
 }
@@ -188,16 +192,19 @@ form.inline { display: inline; }
 /* Topbar */
 .topbar {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   padding: var(--space-4) var(--space-5);
   gap: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 .brand {
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-family: var(--font-brand);
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: var(--text);
 }
 .workspace-toggle { display: flex; gap: var(--space-1); }
 .workspace-toggle .ws {
@@ -212,13 +219,13 @@ form.inline { display: inline; }
 }
 .workspace-toggle .ws:hover { color: var(--text); border-color: transparent; }
 .workspace-toggle .ws.active {
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--text);
+  background: var(--surface-2);
 }
 .user {
   display: flex;
   gap: var(--space-4);
-  align-items: center;
+  align-items: baseline;
   font-size: 13px;
   color: var(--text-quiet);
 }
@@ -239,7 +246,7 @@ form.inline { display: inline; }
 .add-widget-menu summary::-webkit-details-marker { display: none; }
 .add-widget-menu summary::marker { content: ''; }
 .add-widget-menu summary:hover { color: var(--text); }
-.add-widget-menu[open] summary { color: var(--accent); }
+.add-widget-menu[open] summary { color: var(--text); background: var(--surface-2); }
 .add-widget-menu ul {
   position: absolute;
   right: 0;
@@ -251,7 +258,7 @@ form.inline { display: inline; }
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   min-width: 300px;
-  box-shadow: 0 12px 32px oklch(0 0 0 / 0.55);
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.12);
   z-index: 10;
 }
 .add-widget-menu li {
@@ -268,7 +275,7 @@ form.inline { display: inline; }
   color: var(--text);
   letter-spacing: -0.01em;
 }
-.add-widget-menu li button.link:hover { color: var(--accent); }
+.add-widget-menu li button.link:hover { color: var(--text); }
 .add-widget-menu li .muted { font-size: 12px; }
 
 /* Dashboard */
@@ -279,9 +286,11 @@ form.inline { display: inline; }
   text-align: center;
 }
 .empty h2 {
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-family: var(--font-brand);
+  font-style: italic;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   margin: 0 0 var(--space-3);
   color: var(--text);
 }
@@ -296,19 +305,20 @@ form.inline { display: inline; }
   position: relative;
 }
 
-/* Widget chrome — surface block, single hairline under header. */
+/* Widget chrome — surface block sits as a darker-wood tile on the page. */
 .widget {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: var(--space-4);
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .widget-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
   padding-bottom: var(--space-3);
@@ -318,16 +328,16 @@ form.inline { display: inline; }
 }
 .widget-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 .ws-tag {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: var(--text-faint);
 }
 
@@ -358,12 +368,12 @@ form.inline { display: inline; }
 .widget-form textarea { flex: 1; min-height: 60px; }
 .widget-actions {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
-/* Flash — single line, color-only, no card. */
+/* Flash — single inline line. */
 .flash {
   font-size: 13px;
   padding: 0;
@@ -371,7 +381,7 @@ form.inline { display: inline; }
   color: var(--text-quiet);
   transition: opacity 400ms;
 }
-.flash-ok { color: var(--accent); }
+.flash-ok { color: var(--text); font-weight: 500; }
 .flash-err { color: var(--danger); }
 .flash.fade-out { opacity: 0; }
 
@@ -383,7 +393,7 @@ form.inline { display: inline; }
 .htmx-request .htmx-indicator { display: inline; }
 .htmx-request .save-hint { display: none; }
 .htmx-request .widget-form button[type="submit"] {
-  opacity: 0.6;
+  opacity: 0.7;
   pointer-events: none;
 }
 
@@ -399,13 +409,12 @@ form.inline { display: inline; }
   gap: var(--space-3);
   cursor: pointer;
   background: transparent;
-  transition: border-color var(--t), background var(--t);
+  transition: border-color var(--t);
 }
 .dropzone:hover { border-color: var(--text-quiet); }
 .dropzone.dragover {
-  border-color: var(--accent);
+  border-color: var(--text);
   border-style: solid;
-  background: var(--accent-soft);
 }
 .dropzone-hint {
   margin: 0;
@@ -456,7 +465,7 @@ form.inline { display: inline; }
 .bookmark-item:last-child { border-bottom: none; }
 .bookmark-title {
   display: block;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
   color: var(--text);
   text-decoration: none;
@@ -464,7 +473,7 @@ form.inline { display: inline; }
   letter-spacing: -0.005em;
   line-height: 1.35;
 }
-.bookmark-title:hover { color: var(--accent); text-decoration: none; }
+.bookmark-title:hover { color: var(--text); text-decoration: underline; text-decoration-color: var(--text); }
 .bookmark-desc {
   margin: 0;
   display: -webkit-box;
@@ -478,7 +487,6 @@ form.inline { display: inline; }
 .bookmark-meta { margin: var(--space-1) 0 0; font-size: 10px; }
 .bookmark-host {
   letter-spacing: 0.06em;
-  text-transform: lowercase;
   color: var(--text-faint);
 }
 .bookmark-empty {
@@ -488,7 +496,7 @@ form.inline { display: inline; }
   color: var(--text-faint);
 }
 .widget.bookmark.url-dragover {
-  outline: 1px solid var(--accent);
+  outline: 1px solid var(--text);
   outline-offset: -2px;
 }
 
@@ -534,8 +542,8 @@ form.inline { display: inline; }
   line-height: 1;
   width: auto;
 }
-.todo-check:hover { background: transparent; color: var(--accent); border-color: transparent; }
-.todo-row.done .todo-check { color: var(--accent); }
+.todo-check:hover { background: transparent; color: var(--text); border-color: transparent; }
+.todo-row.done .todo-check { color: var(--text-faint); }
 .todo-empty {
   padding: var(--space-5) 0;
   text-align: center;
@@ -548,4 +556,21 @@ form.inline { display: inline; }
   text-align: center;
   font-size: 13px;
   color: var(--text-faint);
+}
+
+/* Phone: collapse gridstack to a vertical stack. */
+@media (max-width: 720px) {
+  .dashboard { padding: var(--space-3); }
+  .grid-stack-item {
+    position: relative !important;
+    width: 100% !important;
+    left: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    height: auto !important;
+    min-height: 240px;
+    margin-bottom: var(--space-3);
+  }
+  .grid-stack { display: block; height: auto !important; }
+  .topbar { flex-wrap: wrap; }
 }
