@@ -1,0 +1,36 @@
+name: CI
+
+# Catches what broke the v2.8 -> v2.9 deploy: a requirements.txt that the
+# dev machine could import (installed incrementally) but that fails a clean
+# resolve in the Docker build. Run the real build here so a broken
+# requirements.txt fails on GitHub, before a Portainer redeploy.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deps:
+    name: Resolve dependencies (clean, py3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"   # matches the Dockerfile base
+      # Fast signal: a full clean resolve. The v2.9 break was exactly this
+      # kind of version conflict (icalendar needed tzdata>=2025.3 vs a
+      # ==2025.2 pin), which --dry-run surfaces in seconds. The docker-build
+      # job below is the authoritative check for wheels/compilation.
+      - run: pip install --dry-run -r requirements.txt
+
+  docker-build:
+    name: Build the image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The real thing: build the actual Dockerfile, running the same
+      # `pip install -r requirements.txt` the Portainer deploy runs.
+      - run: docker build -t mnemosyne-ci .
