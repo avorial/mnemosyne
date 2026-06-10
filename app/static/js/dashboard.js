@@ -237,12 +237,41 @@
     });
   }
 
+  // ---- Weather: follow the device ---------------------------------------
+  // The server renders a .wx-locate shell when no place is pinned; we ask
+  // the browser for coordinates and swap in the real forecast (or the
+  // setup form when access is denied or unavailable).
+  function bindWeatherLocate(scope) {
+    (scope || document).querySelectorAll(".wx-locate").forEach((el) => {
+      if (el.dataset.bound === "1") return;
+      el.dataset.bound = "1";
+      const widget = el.closest(".widget");
+      const swap = (url) =>
+        htmx.ajax("GET", url, { target: widget, swap: "outerHTML" });
+      if (!navigator.geolocation) {
+        swap("/widgets/weather/render?denied=1");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) =>
+          swap(
+            "/widgets/weather/render?lat=" + pos.coords.latitude.toFixed(3) +
+            "&lon=" + pos.coords.longitude.toFixed(3)
+          ),
+        () => swap("/widgets/weather/render?denied=1"),
+        { timeout: 8000, maximumAge: 600000 }
+      );
+    });
+  }
+
   bindAutoHide();
   bindDropzones();
   bindBookmarkDrops();
+  bindWeatherLocate();
   document.body.addEventListener("htmx:afterSwap", (e) => {
     bindAutoHide(e.target);
     bindDropzones(e.target);
     bindBookmarkDrops(e.target);
+    bindWeatherLocate(e.target);
   });
 })();

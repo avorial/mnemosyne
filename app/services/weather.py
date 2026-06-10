@@ -21,12 +21,15 @@ from app.services.calendar_types import local_tz
 log = logging.getLogger("mnemosyne.weather")
 
 GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
+REVERSE_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 TIMEOUT_SECONDS = 15.0
 CACHE_TTL_SECONDS = 600
+REVERSE_CACHE_TTL_SECONDS = 3600
 SETTINGS_KEY = "weather_location"
 
 _cache: dict[str, tuple[float, dict]] = {}
+_reverse_cache: dict[str, tuple[float, str]] = {}
 
 
 class WeatherError(RuntimeError):
@@ -114,12 +117,34 @@ async def set_location_by_name(query: str) -> Location:
     return loc
 
 
-async def forecast() -> dict:
+async def reverse_name(latitude: float, longitude: float) -> str:
+    """Place name for raw device coordinates. Keyless (BigDataCloud),
+    cached an hour per ~1km cell, best-effort: '' on any failure."""
+    key = f"{latitude:.2f},{longitude:.2f}"
+    cached = _reverse_cache.get(key)
+    if cached is not None and time.time() - cached[0] < REVERSE_CACHE_TTL_SECONDS:
+        return cached[1]
+    name = ""
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
+            resp = await client.get(
+                REVERSE_URL,
+                params={"latitude": latitude, "longitude": longitude, "localityLanguage": "en"},
+            )
+        if resp.status_code < 400:
+            d = resp.json()
+            name = ", ".join(
+                p for p in (d.get("city") or d.get("locality"), d.get("principalSubdivision")) if p
+            )
+    except httpx.HTTPError:
+        pass
+    _reverse_cache[key] = (time.time(), name)
+    return name
+
+
+async def forecast(loc: Location) -> dict:
     """Glance payload: current, today, tomorrow, next hours. Cached 10 min."""
-    loc = get_location()
-    if loc is None:
-        raise WeatherError("No location set")
-    key = f"{loc.latitude},{loc.longitude}"
+    key = f"{loc.latitude:.2f},{loc.longitude:.2f}"
     cached = _cache.get(key)
     if cached is not None and time.time() - cached[0] < CACHE_TTL_SECONDS:
         return cached[1]

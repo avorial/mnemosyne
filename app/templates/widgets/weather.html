@@ -13,9 +13,25 @@
     Loading…
   </div>
 </div>
+
+{% elif mode == 'locate' %}
+{# Shell: bindWeatherLocate in dashboard.js asks the browser for
+   coordinates and swaps in the real render (or the setup form on deny). #}
+<div class="widget weather">
+  <header class="widget-header">
+    <h3>Weather</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="wx-loading wx-locate muted">Finding you…</div>
+</div>
+
 {% else %}
 <div class="widget weather"
+     {% if mode == 'local' %}
+     hx-get="/widgets/weather/render?lat={{ lat }}&lon={{ lon }}"
+     {% else %}
      hx-get="/widgets/weather/render"
+     {% endif %}
      hx-trigger="every 600s"
      hx-target="this"
      hx-swap="outerHTML">
@@ -27,9 +43,13 @@
     <div class="flash flash-{{ flash.kind }}" data-autohide="4000">{{ flash.message }}</div>
   {% endif %}
 
-  {% if location is none %}
+  {% if mode == 'setup' %}
     <div class="wx-setup">
-      <p class="muted">Name a place; Open-Meteo does the rest. No key, no account.</p>
+      {% if denied %}
+        <p class="muted">Location access was denied, so name a place instead.</p>
+      {% else %}
+        <p class="muted">Name a place; Open-Meteo does the rest. No key, no account.</p>
+      {% endif %}
       <form class="widget-form"
             hx-post="/widgets/weather/set_location"
             hx-target="closest .widget"
@@ -38,9 +58,17 @@
         <input type="text" name="q" required autocomplete="off" placeholder="Lehi">
         <div class="widget-actions">
           <span></span>
-          <button type="submit">Set location</button>
+          <button type="submit">Pin place</button>
         </div>
       </form>
+      {% if not denied %}
+      <p class="muted wx-alt">
+        <button type="button" class="link"
+                hx-post="/widgets/weather/clear_location"
+                hx-target="closest .widget"
+                hx-swap="outerHTML">Use my location instead</button>
+      </p>
+      {% endif %}
     </div>
 
   {% elif error %}
@@ -55,12 +83,22 @@
   {% else %}
     <div class="wx-place muted">
       {{ wx.location }}
+      {% if mode == 'pinned' %}
+      <span class="wx-mode">pinned</span>
       <form hx-post="/widgets/weather/clear_location"
             hx-target="closest .widget"
             hx-swap="outerHTML"
             class="inline" method="post">
-        <button type="submit" class="link">change</button>
+        <button type="submit" class="link">unpin</button>
       </form>
+      {% else %}
+      <form hx-get="/widgets/weather/render?setup=1"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline">
+        <button type="submit" class="link">pin a place</button>
+      </form>
+      {% endif %}
     </div>
     <p class="wx-now">
       <span class="wx-temp">{{ wx.now.temp }}°</span>

@@ -1,7 +1,9 @@
-"""Weather widget — Open-Meteo glance, no API key.
+"""Weather widget — Open-Meteo glance, no API key, based on where you are.
 
-Setup is typing a place name once. The location is global (not per
-workspace); the sky over the desk is the same either way.
+Default mode follows the device: the browser supplies coordinates (see
+bindWeatherLocate in dashboard.js), the name comes from a keyless reverse
+geocoder. Pinning a place by name is the explicit override, and the
+fallback when location access is denied.
 """
 
 from __future__ import annotations
@@ -10,7 +12,7 @@ import logging
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -31,44 +33,56 @@ def _current_workspace(request: Request) -> str:
     return ws if ws in ("personal", "work") else "personal"
 
 
-async def _render(request: Request, workspace: str, flash: dict | None = None) -> HTMLResponse:
-    location = weather.get_location()
-    data: dict | None = None
-    error: str | None = None
-    if location is not None:
-        try:
-            data = await weather.forecast()
-        except weather.WeatherError as e:
-            log.warning("forecast failed: %s", e)
-            error = str(e)
-    return templates.TemplateResponse(
-        "widgets/weather.html",
-        {
-            "request": request,
-            "workspace": workspace,
-            "loaded": True,
-            "flash": flash,
-            "location": location,
-            "wx": data,
-            "error": error,
-        },
-    )
-
-
 def _auth(session: auth.Session | None) -> HTMLResponse | None:
     if session is None:
         return HTMLResponse(status_code=401, content="not authenticated")
     return None
 
 
+def _template(request: Request, workspace: str, ctx: dict) -> HTMLResponse:
+    base = {"request": request, "workspace": workspace, "loaded": True,
+            "mode": "setup", "flash": None, "wx": None, "error": None,
+            "lat": None, "lon": None, "denied": False}
+    return templates.TemplateResponse("widgets/weather.html", {**base, **ctx})
+
+
+async def _forecast_ctx(loc: weather.Location) -> dict:
+    try:
+        return {"wx": await weather.forecast(loc)}
+    except weather.WeatherError as e:
+        log.warning("forecast failed: %s", e)
+        return {"error": str(e)}
+
+
 @router.get("/render", response_class=HTMLResponse)
 async def render(
     request: Request,
+    lat: Annotated[float | None, Query()] = None,
+    lon: Annotated[float | None, Query()] = None,
+    setup: Annotated[bool, Query()] = False,
+    denied: Annotated[bool, Query()] = False,
     session: auth.Session | None = Depends(auth.session_from_request),
 ) -> HTMLResponse:
     if (r := _auth(session)) is not None:
         return r
-    return await _render(request, _current_workspace(request))
+    workspace = _current_workspace(request)
+
+    if setup or denied:
+        return _template(request, workspace, {"mode": "setup", "denied": denied})
+
+    if lat is not None and lon is not None:
+        name = await weather.reverse_name(lat, lon) or "Current location"
+        loc = weather.Location(name=name, latitude=lat, longitude=lon)
+        ctx = await _forecast_ctx(loc)
+        return _template(request, workspace, {"mode": "local", "lat": lat, "lon": lon, **ctx})
+
+    pinned = weather.get_location()
+    if pinned is not None:
+        ctx = await _forecast_ctx(pinned)
+        return _template(request, workspace, {"mode": "pinned", **ctx})
+
+    # No pin: hand the browser a locate shell; JS supplies coordinates.
+    return _template(request, workspace, {"mode": "locate"})
 
 
 @router.post("/set_location", response_class=HTMLResponse)
@@ -82,10 +96,14 @@ async def set_location(
     workspace = _current_workspace(request)
     try:
         loc = await weather.set_location_by_name(q)
-        flash = {"kind": "ok", "message": f"Watching the sky over {loc.name}"}
     except weather.WeatherError as e:
-        flash = {"kind": "err", "message": str(e)}
-    return await _render(request, workspace, flash)
+        return _template(request, workspace, {"mode": "setup", "flash": {"kind": "err", "message": str(e)}})
+    ctx = await _forecast_ctx(loc)
+    return _template(request, workspace, {
+        "mode": "pinned",
+        "flash": {"kind": "ok", "message": f"Pinned to {loc.name}"},
+        **ctx,
+    })
 
 
 @router.post("/clear_location", response_class=HTMLResponse)
@@ -96,13 +114,14 @@ async def clear_location(
     if (r := _auth(session)) is not None:
         return r
     weather.clear_location()
-    return await _render(request, _current_workspace(request))
+    # Back to follow-me mode: the locate shell re-asks the browser.
+    return _template(request, _current_workspace(request), {"mode": "locate"})
 
 
 widget = Widget(
     id="weather",
     title="Weather",
-    description="Now, today, tomorrow. Open-Meteo, no key needed.",
+    description="The sky where you are. Open-Meteo, no key needed.",
     default_size={"w": 3, "h": 4},
     router=router,
 )
