@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app import auth
-from app.services import vault
+from app.services import captures, vault
 from app.widget_api import Widget, registry
 
 log = logging.getLogger("mnemosyne.widgets.quick_note")
@@ -45,6 +45,7 @@ def save(
     flash: dict[str, str]
     try:
         written = vault.append_to_daily(target, body)
+        captures.log(target, "note", body)
         rel = written.relative_to(vault.WORKSPACES[target].path)
         where = f"{target}: {rel.as_posix()}" if target != active else rel.as_posix()
         flash = {"kind": "ok", "message": f"Saved to {where}"}

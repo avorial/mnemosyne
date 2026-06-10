@@ -1,15 +1,31 @@
+import asyncio
+import logging
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app import auth, db, widget_api
 from app.config import config
+from app.services import captures, vault
+
+log = logging.getLogger("mnemosyne.main")
 
 BASE_DIR = Path(__file__).resolve().parent
+
+def _app_version() -> str:
+    try:
+        return (BASE_DIR.parent / "VERSION").read_text().strip()
+    except OSError:
+        return "0"
+
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+# Cache-buster for static assets: ?v= changes with every VERSION bump, so a
+# deploy can never leave a browser running last release's CSS/JS.
+templates.env.globals["app_version"] = _app_version()
 
 app = FastAPI(title="Mnemosyne")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -164,6 +180,57 @@ def layout_remove(
     workspace = _workspace_from(request)
     widget_api.remove_from_layout(workspace, instance_id)
     return RedirectResponse("/", status_code=303)
+
+
+@app.post("/share")
+async def share(
+    request: Request,
+    title: Annotated[str, Form()] = "",
+    text: Annotated[str, Form()] = "",
+    url: Annotated[str, Form()] = "",
+    files: Annotated[list[UploadFile], File()] = [],
+    session: auth.Session | None = Depends(maybe_session),
+) -> Response:
+    """Web Share Target: the phone share sheet posts here.
+
+    Everything lands in the active workspace's Inbox, same as the Inbox
+    widget. On success we bounce to the dashboard; the Captured widget is
+    the receipt.
+    """
+    if session is None:
+        return RedirectResponse("/login", status_code=303)
+    workspace = _workspace_from(request)
+    body = "\n\n".join(p.strip() for p in (title, text, url) if p and p.strip())
+    valid_files = [f for f in files if f and f.filename]
+    if not body and not valid_files:
+        return RedirectResponse("/", status_code=303)
+    try:
+        saved = []
+        for f in valid_files:
+            content = await f.read()
+            if content:
+                saved.append(
+                    await asyncio.to_thread(vault.save_attachment, workspace, f.filename, content)
+                )
+        await asyncio.to_thread(vault.write_inbox, workspace, body, saved)
+        captures.log(workspace, "share", body or f"{len(saved)} attachment(s)")
+    except vault.VaultError as e:
+        log.exception("share save failed")
+        return templates.TemplateResponse(
+            "share_failed.html",
+            {"request": request, "error": str(e)},
+            status_code=500,
+        )
+    return RedirectResponse("/", status_code=303)
+
+
+@app.get("/sw.js")
+def service_worker() -> Response:
+    """Served from the root so its scope covers the whole app."""
+    return Response(
+        content=(BASE_DIR / "static" / "js" / "sw.js").read_text(),
+        media_type="application/javascript",
+    )
 
 
 @app.get("/healthz")

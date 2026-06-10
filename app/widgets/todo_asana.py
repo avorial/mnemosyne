@@ -19,7 +19,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import auth
 from app.config import config
-from app.services import asana_client, secret_files, todos
+from app.services import asana_client, captures, secret_files, todos
 from app.widget_api import Widget, registry
 
 log = logging.getLogger("mnemosyne.widgets.todo_asana")
@@ -144,6 +144,7 @@ async def create(
     target = save_to if save_to in ("personal", "work") else active
     try:
         t = await todos.create(target, name)
+        captures.log(target, "todo", t.name)
         where = f"Added to {target}" if target != active else "Added"
         flash = {"kind": "ok", "message": f"{where}: {t.name}"}
     except (asana_client.AsanaError, ValueError, RuntimeError) as e:

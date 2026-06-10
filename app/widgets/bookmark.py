@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app import auth
-from app.services import bookmarks, link_fetch, vault
+from app.services import bookmarks, captures, link_fetch, vault
 from app.widget_api import Widget, registry
 
 log = logging.getLogger("mnemosyne.widgets.bookmark")
@@ -95,6 +95,7 @@ async def save(
 
     relpath = abs_path.relative_to(vault.WORKSPACES[target].path).as_posix()
     bookmarks.insert(target, meta.url, title, meta.description, relpath)
+    captures.log(target, "bookmark", title)
     where = f"{target}: {relpath}" if target != active else relpath
     return _render(
         request,

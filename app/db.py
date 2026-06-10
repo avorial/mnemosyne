@@ -65,6 +65,22 @@ SCHEMA = [
     """,
     "CREATE INDEX IF NOT EXISTS todos_workspace_idx ON todos(workspace)",
     "CREATE INDEX IF NOT EXISTS todos_completed_idx ON todos(completed)",
+    """
+    CREATE TABLE IF NOT EXISTS capture_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        workspace TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS capture_log_created_idx ON capture_log(created_at)",
+    """
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+    )
+    """,
 ]
 
 

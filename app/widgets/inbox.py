@@ -16,7 +16,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app import auth
-from app.services import vault
+from app.services import captures, vault
 from app.widget_api import Widget, registry
 
 log = logging.getLogger("mnemosyne.widgets.inbox")
@@ -75,6 +75,7 @@ async def save(
         note_abs = await asyncio.to_thread(
             vault.write_inbox, target, body, saved
         )
+        captures.log(target, "inbox", body or f"{len(saved)} attachment(s)")
         rel = note_abs.relative_to(vault.WORKSPACES[target].path)
         where = f"{target}: {rel.as_posix()}" if target != active else rel.as_posix()
         msg = f"Saved {where}"

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Share failed. Mnemosyne{% endblock %}
+
+{% block body %}
+<main class="login">
+  <h1>That didn't land.</h1>
+  <p class="flash flash-err">{{ error }}</p>
+  <p class="muted"><a href="/">Back to the desk</a></p>
+</main>
+{% endblock %}

@@ -46,6 +46,21 @@
     }
   });
 
+  // ---- `n` focuses capture (Quick Note first, else any capture box) -----
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "n" || e.metaKey || e.ctrlKey || e.altKey) return;
+    const el = document.activeElement;
+    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" ||
+               el.tagName === "SELECT" || el.isContentEditable)) return;
+    const target =
+      document.querySelector(".widget.quick-note textarea") ||
+      document.querySelector(".widget textarea");
+    if (target) {
+      e.preventDefault();
+      target.focus();
+    }
+  });
+
   // ---- Flash auto-hide --------------------------------------------------
   function bindAutoHide(scope) {
     (scope || document).querySelectorAll(".flash[data-autohide]").forEach((el) => {

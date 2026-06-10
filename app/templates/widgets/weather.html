@@ -1,0 +1,83 @@
+{# Lazy-load pattern, same as the other stateful widgets. #}
+{% if loaded is not defined %}
+<div class="widget weather">
+  <header class="widget-header">
+    <h3>Weather</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="wx-loading muted"
+       hx-get="/widgets/weather/render"
+       hx-trigger="load"
+       hx-target="closest .widget"
+       hx-swap="outerHTML">
+    Loading…
+  </div>
+</div>
+{% else %}
+<div class="widget weather"
+     hx-get="/widgets/weather/render"
+     hx-trigger="every 600s"
+     hx-target="this"
+     hx-swap="outerHTML">
+  <header class="widget-header">
+    <h3>Weather</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  {% if flash %}
+    <div class="flash flash-{{ flash.kind }}" data-autohide="4000">{{ flash.message }}</div>
+  {% endif %}
+
+  {% if location is none %}
+    <div class="wx-setup">
+      <p class="muted">Name a place; Open-Meteo does the rest. No key, no account.</p>
+      <form class="widget-form"
+            hx-post="/widgets/weather/set_location"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            method="post">
+        <input type="text" name="q" required autocomplete="off" placeholder="Lehi">
+        <div class="widget-actions">
+          <span></span>
+          <button type="submit">Set location</button>
+        </div>
+      </form>
+    </div>
+
+  {% elif error %}
+    <div class="flash flash-err">{{ error }}</div>
+    <form hx-get="/widgets/weather/render"
+          hx-target="closest .widget"
+          hx-swap="outerHTML"
+          class="inline">
+      <button type="submit" class="link">retry</button>
+    </form>
+
+  {% else %}
+    <div class="wx-place muted">
+      {{ wx.location }}
+      <form hx-post="/widgets/weather/clear_location"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline" method="post">
+        <button type="submit" class="link">change</button>
+      </form>
+    </div>
+    <p class="wx-now">
+      <span class="wx-temp">{{ wx.now.temp }}°</span>
+      <span class="wx-word">{{ wx.now.word }}</span>
+      {% if wx.now.feels != wx.now.temp %}<span class="wx-feels">feels {{ wx.now.feels }}°</span>{% endif %}
+    </p>
+    <ul class="wx-days">
+      <li><span class="wx-day-label">Today</span> {{ wx.today.lo }}–{{ wx.today.hi }}° {{ wx.today.word }}{% if wx.today.precip and wx.today.precip > 15 %} · {{ wx.today.precip }}%{% endif %}</li>
+      <li><span class="wx-day-label">Tomorrow</span> {{ wx.tomorrow.lo }}–{{ wx.tomorrow.hi }}° {{ wx.tomorrow.word }}{% if wx.tomorrow.precip and wx.tomorrow.precip > 15 %} · {{ wx.tomorrow.precip }}%{% endif %}</li>
+    </ul>
+    {% if wx.hours %}
+    <ul class="wx-hours">
+      {% for h in wx.hours %}
+      <li><span class="wx-hour">{{ h.label }}</span><span class="wx-hour-temp">{{ h.temp }}°</span>{% if h.precip and h.precip > 15 %}<span class="wx-hour-precip">{{ h.precip }}%</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  {% endif %}
+</div>
+{% endif %}

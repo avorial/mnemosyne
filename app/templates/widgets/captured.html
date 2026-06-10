@@ -1,0 +1,42 @@
+{# Lazy-load pattern, same as the other stateful widgets. #}
+{% if loaded is not defined %}
+<div class="widget captured">
+  <header class="widget-header">
+    <h3>Captured</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="cap-loading muted"
+       hx-get="/widgets/captured/render"
+       hx-trigger="load"
+       hx-target="closest .widget"
+       hx-swap="outerHTML">
+    Loading…
+  </div>
+</div>
+{% else %}
+<div class="widget captured"
+     hx-get="/widgets/captured/render"
+     hx-trigger="every 120s"
+     hx-target="this"
+     hx-swap="outerHTML">
+  <header class="widget-header">
+    <h3>Captured</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+
+  {% if rows %}
+    <p class="cap-count muted">{{ total }} today</p>
+    <ul class="cap-list">
+      {% for r in rows %}
+      <li class="cap-row">
+        <span class="cap-time">{{ r.time }}</span>
+        <span class="cap-kind">{{ r.kind }}</span>
+        <span class="cap-summary">{{ r.summary }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="cap-empty">Nothing captured yet today.</p>
+  {% endif %}
+</div>
+{% endif %}

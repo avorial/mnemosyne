@@ -1,6 +1,6 @@
 # Mnemosyne
 
-A self-hosted personal widget dashboard. Notes, quick-capture inbox, bookmarks, todos (with Asana sync), calendar, and GitHub activity — composable as drag-and-resize widgets on a single dashboard.
+A self-hosted personal widget dashboard. Notes, quick-capture inbox, bookmarks, todos (with Asana sync), calendar, GitHub activity, weather, and a captured-today log — composable as drag-and-resize widgets on a single dashboard. Installable as a PWA; the phone share sheet drops straight into the inbox.
 
 Live: https://mnemosyne.avorial.com
 

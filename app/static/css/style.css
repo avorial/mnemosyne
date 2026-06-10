@@ -853,6 +853,114 @@ form.inline { display: inline; }
 }
 .gh-empty p { margin: 0 0 var(--space-2); }
 
+/* Captured widget */
+.cap-loading, .wx-loading {
+  padding: var(--space-5) 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.cap-count {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.cap-list { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; min-height: 0; }
+.cap-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+.cap-time {
+  flex-shrink: 0;
+  width: 3.2rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-quiet);
+  font-variant-numeric: tabular-nums;
+}
+.cap-kind {
+  flex-shrink: 0;
+  width: 3.4rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.cap-summary {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cap-empty {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--text-faint);
+}
+
+/* Weather widget */
+.wx-setup p { margin: 0 0 var(--space-2); font-size: 13px; }
+.wx-place {
+  margin-bottom: var(--space-2);
+  font-size: 12px;
+  color: var(--text-quiet);
+}
+.wx-now {
+  margin: 0 0 var(--space-3);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+.wx-temp {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 350;
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+  line-height: 1;
+}
+.wx-word { font-size: 14px; color: var(--text-quiet); }
+.wx-feels { font-size: 11px; color: var(--text-faint); }
+.wx-days { list-style: none; margin: 0 0 var(--space-3); padding: 0; font-size: 13px; }
+.wx-days li { padding: var(--space-1) 0; color: var(--text-quiet); }
+.wx-day-label {
+  display: inline-block;
+  width: 5.4rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.wx-hours {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.wx-hours li { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+.wx-hour {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+.wx-hour-temp { font-size: 13px; font-variant-numeric: tabular-nums; }
+.wx-hour-precip { font-size: 10px; color: var(--text-quiet); font-variant-numeric: tabular-nums; }
+
 /* Phone: collapse gridstack to a vertical stack. */
 @media (max-width: 720px) {
   .dashboard { padding: var(--space-3); }
