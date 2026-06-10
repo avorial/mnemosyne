@@ -1,0 +1,13 @@
+{# Workspace radios for capture forms. Defaults to the active workspace;
+   posting routes the capture to whichever is checked. #}
+<fieldset class="pick ws-pick">
+  <legend class="visually-hidden">Save to workspace</legend>
+  <label class="pick-opt">
+    <input type="radio" name="workspace" value="personal" {% if workspace != 'work' %}checked{% endif %}>
+    <span>Personal</span>
+  </label>
+  <label class="pick-opt">
+    <input type="radio" name="workspace" value="work" {% if workspace == 'work' %}checked{% endif %}>
+    <span>Work</span>
+  </label>
+</fieldset>

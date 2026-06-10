@@ -135,18 +135,21 @@ async def clear_workspace(
 async def create(
     request: Request,
     name: Annotated[str, Form()],
+    save_to: Annotated[str, Form(alias="workspace")] = "",
     session: auth.Session | None = Depends(auth.session_from_request),
 ) -> HTMLResponse:
     if (r := _auth(session)) is not None:
         return r
-    workspace = _current_workspace(request)
+    active = _current_workspace(request)
+    target = save_to if save_to in ("personal", "work") else active
     try:
-        t = await todos.create(workspace, name)
-        flash = {"kind": "ok", "message": f"Added: {t.name}"}
+        t = await todos.create(target, name)
+        where = f"Added to {target}" if target != active else "Added"
+        flash = {"kind": "ok", "message": f"{where}: {t.name}"}
     except (asana_client.AsanaError, ValueError, RuntimeError) as e:
         log.exception("todo create failed")
         flash = {"kind": "err", "message": f"Add failed: {e}"}
-    return await _render(request, workspace, flash)
+    return await _render(request, active, flash)
 
 
 @router.post("/toggle", response_class=HTMLResponse)

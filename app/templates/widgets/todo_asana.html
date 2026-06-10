@@ -102,6 +102,7 @@
           method="post">
       <input type="text" name="name" placeholder="New task… (Enter to add)" required autocomplete="off">
       <button type="submit">Add</button>
+      {% include "widgets/_ws_pick.html" %}
     </form>
     {% include "widgets/_todo_list.html" %}
   {% endif %}

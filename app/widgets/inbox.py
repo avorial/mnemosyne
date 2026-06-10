@@ -44,18 +44,20 @@ async def save(
     request: Request,
     body: Annotated[str, Form()] = "",
     files: Annotated[list[UploadFile], File()] = [],
+    save_to: Annotated[str, Form(alias="workspace")] = "",
     session: auth.Session | None = Depends(auth.session_from_request),
 ) -> HTMLResponse:
     if session is None:
         return HTMLResponse(status_code=401, content="not authenticated")
-    workspace = _current_workspace(request)
+    active = _current_workspace(request)
+    target = save_to if save_to in ("personal", "work") else active
     body = (body or "").strip()
     valid_files = [f for f in files if f and f.filename]
     if not body and not valid_files:
         return _render(
             request,
-            workspace,
-            {"kind": "err", "message": "Nothing to save — drop a file, paste, or type."},
+            active,
+            {"kind": "err", "message": "Nothing to save. Drop a file, paste, or type."},
         )
 
     saved: list[Path] = []
@@ -66,22 +68,23 @@ async def save(
                 continue
             saved.append(
                 await asyncio.to_thread(
-                    vault.save_attachment, workspace, f.filename, content
+                    vault.save_attachment, target, f.filename, content
                 )
             )
         # write_inbox does git add/commit/push — keep it off the event loop.
         note_abs = await asyncio.to_thread(
-            vault.write_inbox, workspace, body, saved
+            vault.write_inbox, target, body, saved
         )
-        rel = note_abs.relative_to(vault.WORKSPACES[workspace].path)
-        msg = f"Saved {rel.as_posix()}"
+        rel = note_abs.relative_to(vault.WORKSPACES[target].path)
+        where = f"{target}: {rel.as_posix()}" if target != active else rel.as_posix()
+        msg = f"Saved {where}"
         if saved:
             msg += f" + {len(saved)} attachment" + ("s" if len(saved) != 1 else "")
         flash = {"kind": "ok", "message": msg}
     except vault.VaultError as e:
         log.exception("inbox save failed")
         flash = {"kind": "err", "message": f"Save failed: {e}"}
-    return _render(request, workspace, flash)
+    return _render(request, active, flash)
 
 
 widget = Widget(

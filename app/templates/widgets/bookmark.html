@@ -35,6 +35,7 @@
            placeholder="https://… (paste a URL)"
            required autocomplete="off" spellcheck="false">
     <div class="widget-actions">
+      {% include "widgets/_ws_pick.html" %}
       <span class="muted htmx-indicator">Fetching…</span>
       <span class="muted save-hint">title &amp; description are fetched automatically</span>
       <button type="submit">Save bookmark</button>

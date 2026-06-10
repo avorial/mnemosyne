@@ -26,26 +26,34 @@ def _current_workspace(request: Request) -> str:
     return ws if ws in ("personal", "work") else "personal"
 
 
+def _target_workspace(request: Request, chosen: str) -> str:
+    """The form's workspace radio wins; fall back to the active workspace."""
+    return chosen if chosen in ("personal", "work") else _current_workspace(request)
+
+
 @router.post("/save", response_class=HTMLResponse)
 def save(
     request: Request,
     body: str = Form(...),
+    save_to: str = Form("", alias="workspace"),
     session: auth.Session = Depends(auth.session_from_request),
 ):
     if session is None:
         return HTMLResponse(status_code=401, content="not authenticated")
-    workspace = _current_workspace(request)
+    active = _current_workspace(request)
+    target = _target_workspace(request, save_to)
     flash: dict[str, str]
     try:
-        written = vault.append_to_daily(workspace, body)
-        rel = written.relative_to(vault.WORKSPACES[workspace].path)
-        flash = {"kind": "ok", "message": f"Saved to {rel.as_posix()}"}
+        written = vault.append_to_daily(target, body)
+        rel = written.relative_to(vault.WORKSPACES[target].path)
+        where = f"{target}: {rel.as_posix()}" if target != active else rel.as_posix()
+        flash = {"kind": "ok", "message": f"Saved to {where}"}
     except vault.VaultError as e:
         log.exception("vault write failed")
         flash = {"kind": "err", "message": f"Save failed: {e}"}
     return templates.TemplateResponse(
         "widgets/quick_note.html",
-        {"request": request, "workspace": workspace, "flash": flash, "item": None},
+        {"request": request, "workspace": active, "flash": flash, "item": None},
     )
 
 

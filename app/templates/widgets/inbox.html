@@ -20,7 +20,8 @@
       <ul class="file-chips" aria-live="polite"></ul>
     </div>
     <div class="widget-actions">
-      <span class="muted">Shift+Enter to save</span>
+      {% include "widgets/_ws_pick.html" %}
+      <span class="muted save-hint">Shift+Enter to save</span>
       <button type="submit">Save to Inbox</button>
     </div>
   </form>

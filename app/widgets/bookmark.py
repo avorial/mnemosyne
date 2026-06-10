@@ -63,21 +63,23 @@ def render(
 async def save(
     request: Request,
     url: Annotated[str, Form()],
+    save_to: Annotated[str, Form(alias="workspace")] = "",
     session: auth.Session | None = Depends(auth.session_from_request),
 ) -> HTMLResponse:
     if session is None:
         return HTMLResponse(status_code=401, content="not authenticated")
-    workspace = _current_workspace(request)
+    active = _current_workspace(request)
+    target = save_to if save_to in ("personal", "work") else active
     url = (url or "").strip()
     if not url:
-        return _render(request, workspace, {"kind": "err", "message": "URL required"})
+        return _render(request, active, {"kind": "err", "message": "URL required"})
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
     try:
         meta = await link_fetch.fetch_meta(url)
     except ValueError as e:
-        return _render(request, workspace, {"kind": "err", "message": str(e)})
+        return _render(request, active, {"kind": "err", "message": str(e)})
 
     title = meta.title or meta.url
     try:
@@ -85,18 +87,19 @@ async def save(
         # the event loop so other requests (incl. /healthz) stay responsive
         # while git is talking to GitHub.
         abs_path = await asyncio.to_thread(
-            vault.write_bookmark, workspace, meta.url, title, meta.description
+            vault.write_bookmark, target, meta.url, title, meta.description
         )
     except vault.VaultError as e:
         log.exception("bookmark write failed")
-        return _render(request, workspace, {"kind": "err", "message": f"Save failed: {e}"})
+        return _render(request, active, {"kind": "err", "message": f"Save failed: {e}"})
 
-    relpath = abs_path.relative_to(vault.WORKSPACES[workspace].path).as_posix()
-    bookmarks.insert(workspace, meta.url, title, meta.description, relpath)
+    relpath = abs_path.relative_to(vault.WORKSPACES[target].path).as_posix()
+    bookmarks.insert(target, meta.url, title, meta.description, relpath)
+    where = f"{target}: {relpath}" if target != active else relpath
     return _render(
         request,
-        workspace,
-        {"kind": "ok", "message": f"Saved {relpath}"},
+        active,
+        {"kind": "ok", "message": f"Saved {where}"},
     )
 
 

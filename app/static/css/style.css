@@ -478,7 +478,49 @@ form.inline { display: inline; }
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Radio picks — the topbar's gold-underline gesture, in miniature.
+   Used for the save-to workspace choice and the calendar connect method. */
+.pick {
+  display: inline-flex;
+  gap: var(--space-4);
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.pick-opt { cursor: pointer; }
+.pick-opt input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.pick-opt span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  transition: color var(--t), border-color var(--t);
+}
+.pick-opt:hover span { color: var(--text-quiet); }
+.pick-opt input:checked + span { color: var(--text); border-bottom-color: var(--gold); }
+.pick-opt input:focus-visible + span { outline: 1px solid var(--gold); outline-offset: 3px; }
 .widget-actions .muted {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -631,10 +673,12 @@ form.inline { display: inline; }
 }
 .todo-asana .todo-add {
   flex-direction: row;
+  flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
   margin-bottom: var(--space-3);
 }
+.todo-asana .todo-add .ws-pick { width: 100%; }
 .todo-asana .todo-add input[type="text"] { flex: 1; }
 .todo-asana .todo-add button { padding: var(--space-2) var(--space-4); flex-shrink: 0; }
 .todo-list { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; min-height: 0; }
@@ -760,7 +804,13 @@ form.inline { display: inline; }
   flex: none;
   margin-top: var(--space-3);
 }
-.cal-oauth-alt { margin-top: var(--space-4); font-size: 12px; }
+/* Calendar connect: method radios swap the two panels. Without the
+   picker (no OAuth creds configured) the ICS panel always shows. */
+.cal-setup .method-pick { margin-bottom: var(--space-4); }
+.cal-setup .method-panel { display: none; }
+.cal-setup:not(:has(.method-pick)) .method-ics { display: block; }
+.cal-setup:has(input[value="ics"]:checked) .method-ics { display: block; }
+.cal-setup:has(input[value="oauth"]:checked) .method-oauth { display: block; }
 .todo-setup { padding: var(--space-2) 0; }
 .todo-setup p { margin: 0 0 var(--space-2); font-size: 13px; }
 .cal-loading, .gh-loading {

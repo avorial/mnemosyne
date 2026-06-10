@@ -25,22 +25,42 @@
   {% endif %}
 
   {% if mode == 'setup' %}
-    <div class="cal-empty">
-      <p class="muted">Paste your {{ provider_name }} secret address (ICS) to glance at your day from here. {{ ics_hint }}</p>
-      <form class="widget-form"
-            hx-post="/widgets/calendar/set_ics"
-            hx-target="closest .widget"
-            hx-swap="outerHTML"
-            method="post">
-        <input type="url" name="url" required autocomplete="off"
-               placeholder="https://… or webcal://…">
-        <div class="widget-actions">
-          <span class="muted">The link stays on your server.</span>
-          <button type="submit">Connect</button>
-        </div>
-      </form>
+    <div class="cal-empty cal-setup">
       {% if oauth_available %}
-      <p class="muted cal-oauth-alt">Prefer OAuth? <a href="/widgets/calendar/{{ provider }}/connect">Connect {{ provider_name }}</a></p>
+      <fieldset class="pick method-pick">
+        <legend class="visually-hidden">Connection method</legend>
+        <label class="pick-opt">
+          <input type="radio" name="cal-method-{{ workspace }}" value="ics" checked>
+          <span>Secret address</span>
+        </label>
+        <label class="pick-opt">
+          <input type="radio" name="cal-method-{{ workspace }}" value="oauth">
+          <span>Sign in</span>
+        </label>
+      </fieldset>
+      {% endif %}
+
+      <div class="method-panel method-ics">
+        <p class="muted">Paste your {{ provider_name }} secret address (ICS) to glance at your day from here. {{ ics_hint }}</p>
+        <form class="widget-form"
+              hx-post="/widgets/calendar/set_ics"
+              hx-target="closest .widget"
+              hx-swap="outerHTML"
+              method="post">
+          <input type="url" name="url" required autocomplete="off"
+                 placeholder="https://… or webcal://…">
+          <div class="widget-actions">
+            <span class="muted">The link stays on your server.</span>
+            <button type="submit">Connect</button>
+          </div>
+        </form>
+      </div>
+
+      {% if oauth_available %}
+      <div class="method-panel method-oauth">
+        <p class="muted">Sign in with {{ provider_name }} and approve read access. Nothing to paste; access can be revoked from your account at any time.</p>
+        <a class="cal-connect" href="/widgets/calendar/{{ provider }}/connect">Sign in with {{ provider_name }}</a>
+      </div>
       {% endif %}
     </div>
 
