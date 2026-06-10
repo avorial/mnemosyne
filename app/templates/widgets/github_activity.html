@@ -23,9 +23,19 @@
 
   {% if not pat_configured %}
     <div class="gh-empty">
-      <p>GitHub PAT not configured.</p>
-      <p class="muted">Expected at: <code>{{ pat_file }}</code></p>
-      <p class="muted">Drop a single-line file with a Personal Access Token there. It is read fresh on every request, no restart needed.</p>
+      <p class="muted">Sign in to GitHub, create a token under Settings, Developer settings, Personal access tokens, and paste it here.</p>
+      <form class="widget-form"
+            hx-post="/widgets/github_activity/set_token"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            method="post">
+        <input type="password" name="token" required autocomplete="off"
+               placeholder="github_pat_… or ghp_…">
+        <div class="widget-actions">
+          <span class="muted">Stored on your server, never logged.</span>
+          <button type="submit">Connect</button>
+        </div>
+      </form>
     </div>
 
   {% elif error %}
@@ -36,6 +46,19 @@
             hx-swap="outerHTML"
             class="inline">
         <button type="submit" class="link">retry</button>
+      </form>
+      <p class="muted">Token rejected? Paste a fresh one:</p>
+      <form class="widget-form"
+            hx-post="/widgets/github_activity/set_token"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            method="post">
+        <input type="password" name="token" required autocomplete="off"
+               placeholder="github_pat_… or ghp_…">
+        <div class="widget-actions">
+          <span></span>
+          <button type="submit">Replace token</button>
+        </div>
       </form>
     </div>
 

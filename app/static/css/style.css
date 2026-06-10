@@ -173,7 +173,7 @@ button.link {
 button.link:hover { color: var(--gold-bright); background: transparent; border-color: transparent; }
 
 /* Form fields — bottom hairline only. Focus is answered in gold. */
-input[type="text"], input[type="email"], input[type="url"], input[type="search"], textarea {
+input[type="text"], input[type="email"], input[type="url"], input[type="search"], input[type="password"], textarea {
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--border-strong);
@@ -755,7 +755,14 @@ form.inline { display: inline; }
 }
 .cal-connect:hover { color: var(--gold-bright); border-color: var(--gold); background: var(--gold-glow); text-decoration: none; }
 .cal-empty p { margin: 0 0 var(--space-2); font-size: 13px; }
-.cal-empty { padding: var(--space-4) 0; }
+.cal-empty { padding: var(--space-2) 0; }
+.cal-empty .widget-form, .gh-empty .widget-form, .todo-setup .widget-form {
+  flex: none;
+  margin-top: var(--space-3);
+}
+.cal-oauth-alt { margin-top: var(--space-4); font-size: 12px; }
+.todo-setup { padding: var(--space-2) 0; }
+.todo-setup p { margin: 0 0 var(--space-2); font-size: 13px; }
 .cal-loading, .gh-loading {
   padding: var(--space-5) 0;
   text-align: center;

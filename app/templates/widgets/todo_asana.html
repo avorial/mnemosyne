@@ -27,10 +27,20 @@
   {% endif %}
 
   {% if not pat_configured %}
-    <div class="todo-empty">
-      <p>Asana PAT not configured.</p>
-      <p class="muted">Expected at: <code>{{ pat_file }}</code></p>
-      <p class="muted">Drop a single-line file with your Asana Personal Access Token there. No restart needed, the token is read on every request. Refresh the widget once the file exists.</p>
+    <div class="todo-setup">
+      <p class="muted">Sign in to Asana, create a Personal Access Token under My Settings, Apps, and paste it here.</p>
+      <form class="widget-form"
+            hx-post="/widgets/todo_asana/set_token"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            method="post">
+        <input type="password" name="token" required autocomplete="off"
+               placeholder="Asana Personal Access Token">
+        <div class="widget-actions">
+          <span class="muted">Stored on your server, never logged.</span>
+          <button type="submit">Connect</button>
+        </div>
+      </form>
     </div>
 
   {% elif mapping is none %}

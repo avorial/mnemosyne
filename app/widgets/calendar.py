@@ -4,8 +4,13 @@ Per PRODUCT.md, the personal workspace glances Google Calendar and the work
 workspace glances the Microsoft 365 calendar. Events are fetched live on each
 render (the dashboard lazy-loads widgets, so this never blocks page load).
 
-OAuth state is signed with the app secret; refresh tokens live as files under
-the secrets dir (see services/oauth_store.py).
+Two ways to connect, checked in this order:
+
+1. **Pasted secret address (ICS)** — the zero-setup path. Log into the
+   provider, copy the calendar's secret/published ICS link, paste it into
+   the widget. See services/ics_calendar.py.
+2. **OAuth** — only offered when client credentials are configured in the
+   environment. See services/google_calendar.py / ms_calendar.py.
 """
 
 from __future__ import annotations
@@ -13,15 +18,16 @@ from __future__ import annotations
 import logging
 from datetime import datetime, time as dtime, timedelta
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
 from app import auth
 from app.config import config
-from app.services import google_calendar, ms_calendar
+from app.services import google_calendar, ics_calendar, ms_calendar
 from app.services.calendar_types import CalendarError, CalendarNotConnected, CalEvent, local_tz
 from app.widget_api import Widget, registry
 
@@ -39,13 +45,19 @@ PROVIDERS = {
         "name": "Google Calendar",
         "module": google_calendar,
         "configured": lambda: config.google_configured,
-        "config_hint": "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET",
+        "ics_hint": (
+            "In Google Calendar: Settings, pick your calendar, Integrate calendar, "
+            "copy the Secret address in iCal format."
+        ),
     },
     "ms": {
         "name": "Microsoft 365",
         "module": ms_calendar,
         "configured": lambda: config.ms_configured,
-        "config_hint": "MS_CLIENT_ID / MS_CLIENT_SECRET / MS_TENANT_ID",
+        "ics_hint": (
+            "In Outlook on the web: Settings, Calendar, Shared calendars, "
+            "Publish a calendar, copy the ICS link."
+        ),
     },
 }
 
@@ -61,6 +73,12 @@ def _current_workspace(request: Request) -> str:
 
 def _state_serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(config.secret_key, salt="calendar-oauth")
+
+
+def _window() -> tuple[datetime, datetime]:
+    tz = local_tz()
+    start = datetime.combine(datetime.now(tz).date(), dtime.min, tzinfo=tz)
+    return start, start + timedelta(days=2)
 
 
 def _day_buckets(events: list[CalEvent]) -> list[dict]:
@@ -83,38 +101,50 @@ def _day_buckets(events: list[CalEvent]) -> list[dict]:
     return buckets
 
 
-async def _render(request: Request, workspace: str) -> HTMLResponse:
+async def _render(request: Request, workspace: str, flash: dict | None = None) -> HTMLResponse:
     provider_id = _provider_for(workspace)
     provider = PROVIDERS[provider_id]
     mod = provider["module"]
-    configured = provider["configured"]()
+    oauth_available = provider["configured"]()
+
+    mode = "setup"
     account: str | None = None
     days: list[dict] = []
     error: str | None = None
-    if configured:
+
+    if ics_calendar.get_url(workspace):
+        mode = "ics"
+        account = await ics_calendar.connected_name(workspace)
+        try:
+            start, end = _window()
+            days = _day_buckets(await ics_calendar.list_events(workspace, start, end))
+        except CalendarError as e:
+            log.warning("ics fetch failed: %s", e)
+            error = str(e)
+    elif oauth_available and mod.connected_account() is not None:
+        mode = "oauth"
         account = mod.connected_account()
-        if account is not None:
-            tz = local_tz()
-            start = datetime.combine(datetime.now(tz).date(), dtime.min, tzinfo=tz)
-            end = start + timedelta(days=2)
-            try:
-                days = _day_buckets(await mod.list_events(start, end))
-            except CalendarNotConnected:
-                account = None
-            except CalendarError as e:
-                log.warning("calendar fetch failed: %s", e)
-                error = str(e)
+        try:
+            start, end = _window()
+            days = _day_buckets(await mod.list_events(start, end))
+        except CalendarNotConnected:
+            mode, account = "setup", None
+        except CalendarError as e:
+            log.warning("calendar fetch failed: %s", e)
+            error = str(e)
+
     return templates.TemplateResponse(
         "widgets/calendar.html",
         {
             "request": request,
             "workspace": workspace,
             "loaded": True,
+            "flash": flash,
+            "mode": mode,
             "provider": provider_id,
             "provider_name": provider["name"],
-            "configured": configured,
-            "config_hint": provider["config_hint"],
-            "redirect_uri": mod.redirect_uri(),
+            "ics_hint": provider["ics_hint"],
+            "oauth_available": oauth_available,
             "account": account,
             "days": days,
             "error": error,
@@ -136,6 +166,40 @@ async def render(
     if (r := _auth(session)) is not None:
         return r
     return await _render(request, _current_workspace(request))
+
+
+@router.post("/set_ics", response_class=HTMLResponse)
+async def set_ics(
+    request: Request,
+    url: Annotated[str, Form()],
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if (r := _auth(session)) is not None:
+        return r
+    workspace = _current_workspace(request)
+    flash: dict[str, str] | None = None
+    try:
+        ics_calendar.set_url(workspace, url)
+        # Validate immediately so a bad paste fails here, not on every glance.
+        start, end = _window()
+        await ics_calendar.list_events(workspace, start, end)
+        flash = {"kind": "ok", "message": "Calendar connected"}
+    except CalendarError as e:
+        ics_calendar.clear_url(workspace)
+        flash = {"kind": "err", "message": str(e)}
+    return await _render(request, workspace, flash)
+
+
+@router.post("/clear_ics", response_class=HTMLResponse)
+async def clear_ics(
+    request: Request,
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if (r := _auth(session)) is not None:
+        return r
+    workspace = _current_workspace(request)
+    ics_calendar.clear_url(workspace)
+    return await _render(request, workspace, {"kind": "ok", "message": "Calendar disconnected"})
 
 
 @router.get("/{provider_id}/connect")

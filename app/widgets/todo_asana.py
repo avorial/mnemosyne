@@ -19,7 +19,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import auth
 from app.config import config
-from app.services import asana_client, todos
+from app.services import asana_client, secret_files, todos
 from app.widget_api import Widget, registry
 
 log = logging.getLogger("mnemosyne.widgets.todo_asana")
@@ -83,6 +83,19 @@ async def render(
     if (r := _auth(session)) is not None:
         return r
     workspace = _current_workspace(request)
+    return await _render(request, workspace)
+
+
+@router.post("/set_token", response_class=HTMLResponse)
+async def set_token(
+    request: Request,
+    token: Annotated[str, Form()],
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if (r := _auth(session)) is not None:
+        return r
+    workspace = _current_workspace(request)
+    secret_files.write_secret(config.asana_pat_file, token)
     return await _render(request, workspace)
 
 

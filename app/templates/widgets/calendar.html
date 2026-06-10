@@ -20,19 +20,28 @@
     <h3>Calendar</h3>
     <span class="ws-tag">{{ workspace }}</span>
   </header>
+  {% if flash %}
+    <div class="flash flash-{{ flash.kind }}" data-autohide="4000">{{ flash.message }}</div>
+  {% endif %}
 
-  {% if not configured %}
+  {% if mode == 'setup' %}
     <div class="cal-empty">
-      <p>{{ provider_name }} credentials not configured.</p>
-      <p class="muted">Set <code>{{ config_hint }}</code> in the stack environment, and register this redirect URI with the provider:</p>
-      <p class="muted"><code>{{ redirect_uri }}</code></p>
-    </div>
-
-  {% elif account is none %}
-    <div class="cal-empty">
-      {% if error %}<div class="flash flash-err">{{ error }}</div>{% endif %}
-      <p class="muted">Glance at your {{ provider_name }} day from here.</p>
-      <a class="cal-connect" href="/widgets/calendar/{{ provider }}/connect">Connect {{ provider_name }}</a>
+      <p class="muted">Paste your {{ provider_name }} secret address (ICS) to glance at your day from here. {{ ics_hint }}</p>
+      <form class="widget-form"
+            hx-post="/widgets/calendar/set_ics"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            method="post">
+        <input type="url" name="url" required autocomplete="off"
+               placeholder="https://… or webcal://…">
+        <div class="widget-actions">
+          <span class="muted">The link stays on your server.</span>
+          <button type="submit">Connect</button>
+        </div>
+      </form>
+      {% if oauth_available %}
+      <p class="muted cal-oauth-alt">Prefer OAuth? <a href="/widgets/calendar/{{ provider }}/connect">Connect {{ provider_name }}</a></p>
+      {% endif %}
     </div>
 
   {% else %}
@@ -45,11 +54,11 @@
         <button type="submit" class="link">refresh</button>
       </form>
       ·
-      <form hx-post="/widgets/calendar/disconnect"
+      <form hx-post="/widgets/calendar/{{ 'clear_ics' if mode == 'ics' else 'disconnect' }}"
             hx-target="closest .widget"
             hx-swap="outerHTML"
             class="inline" method="post"
-            hx-confirm="Disconnect {{ provider_name }}? You can reconnect any time.">
+            hx-confirm="Disconnect this calendar? You can reconnect any time.">
         <button type="submit" class="link">disconnect</button>
       </form>
     </div>
