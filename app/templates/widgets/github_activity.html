@@ -1,0 +1,59 @@
+{# Lazy-load pattern: the dashboard includes this with no context; the real
+   state loads via HTMX on mount. #}
+{% if loaded is not defined %}
+<div class="widget gh">
+  <header class="widget-header">
+    <h3>GitHub</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="gh-loading muted"
+       hx-get="/widgets/github_activity/render"
+       hx-trigger="load"
+       hx-target="closest .widget"
+       hx-swap="outerHTML">
+    Loading…
+  </div>
+</div>
+{% else %}
+<div class="widget gh">
+  <header class="widget-header">
+    <h3>GitHub</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+
+  {% if not pat_configured %}
+    <div class="gh-empty">
+      <p>GitHub PAT not configured.</p>
+      <p class="muted">Expected at: <code>{{ pat_file }}</code></p>
+      <p class="muted">Drop a single-line file with a Personal Access Token there — read fresh on every request, no restart needed.</p>
+    </div>
+
+  {% elif error %}
+    <div class="gh-empty">
+      <div class="flash flash-err">{{ error }}</div>
+      <form hx-get="/widgets/github_activity/render"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline">
+        <button type="submit" class="link">retry</button>
+      </form>
+    </div>
+
+  {% elif rows %}
+    <ul class="gh-list">
+      {% for r in rows %}
+      <li class="gh-row">
+        <span class="gh-ago">{{ r.ago }}</span>
+        <span class="gh-body">
+          <a class="gh-link" href="{{ r.url }}" target="_blank" rel="noopener">{{ r.summary }}</a>
+          <span class="gh-repo">{{ r.repo }}</span>
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+
+  {% else %}
+    <div class="gh-empty muted">No recent activity.</div>
+  {% endif %}
+</div>
+{% endif %}

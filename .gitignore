@@ -5,6 +5,9 @@
 secrets/
 .deploy_webhook
 
+# Local dev state (DB, vaults, secrets under ./data)
+data/
+
 # Databases
 *.db
 *.sqlite

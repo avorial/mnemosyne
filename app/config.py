@@ -33,9 +33,42 @@ class Config:
 
     asana_pat_file: Path
 
+    google_client_id: str
+    google_client_secret: str
+    ms_client_id: str
+    ms_client_secret: str
+    ms_tenant_id: str
+
+    github_pat_file: Path
+
+    timezone: str
+
     @property
     def smtp_configured(self) -> bool:
         return bool(self.smtp_host and self.smtp_from)
+
+    @property
+    def google_configured(self) -> bool:
+        return bool(self.google_client_id and self.google_client_secret)
+
+    @property
+    def ms_configured(self) -> bool:
+        return bool(self.ms_client_id and self.ms_client_secret and self.ms_tenant_id)
+
+    @property
+    def google_token_file(self) -> Path:
+        return self.secrets_path / "google_calendar_token.json"
+
+    @property
+    def ms_token_file(self) -> Path:
+        return self.secrets_path / "ms_calendar_token.json"
+
+    @property
+    def github_pat(self) -> str:
+        """Read the GitHub PAT from disk on each call (same rationale as asana_pat)."""
+        if not self.github_pat_file.exists():
+            return ""
+        return self.github_pat_file.read_text().strip()
 
     @property
     def asana_pat(self) -> str:
@@ -64,6 +97,13 @@ def load() -> Config:
         smtp_password=os.environ.get("SMTP_PASSWORD", ""),
         smtp_from=os.environ.get("SMTP_FROM", ""),
         asana_pat_file=Path(os.environ.get("ASANA_PAT_FILE", "/mnt/mnemosyne/secrets/asana_pat")),
+        google_client_id=os.environ.get("GOOGLE_CLIENT_ID", ""),
+        google_client_secret=os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+        ms_client_id=os.environ.get("MS_CLIENT_ID", ""),
+        ms_client_secret=os.environ.get("MS_CLIENT_SECRET", ""),
+        ms_tenant_id=os.environ.get("MS_TENANT_ID", ""),
+        github_pat_file=Path(os.environ.get("GITHUB_PAT_FILE", "/mnt/mnemosyne/secrets/github_pat")),
+        timezone=os.environ.get("TIMEZONE", "America/Denver"),
     )
 
 

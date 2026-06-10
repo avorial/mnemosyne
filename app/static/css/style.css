@@ -558,6 +558,107 @@ form.inline { display: inline; }
   color: var(--text-faint);
 }
 
+/* Calendar widget */
+.cal-account-bar {
+  margin-bottom: var(--space-3);
+  font-size: 12px;
+  color: var(--text-quiet);
+}
+.cal-days {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.cal-day-head {
+  margin: 0 0 var(--space-2);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-quiet);
+}
+.cal-day-date {
+  font-weight: 400;
+  color: var(--text-faint);
+  margin-left: var(--space-2);
+}
+.cal-events { list-style: none; margin: 0; padding: 0; }
+.cal-event {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+.cal-time {
+  flex-shrink: 0;
+  width: 6.5rem;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-quiet);
+  font-variant-numeric: tabular-nums;
+}
+.cal-event.all-day .cal-time { color: var(--text-faint); }
+.cal-title { flex: 1; font-size: 14px; line-height: 1.35; }
+.cal-loc {
+  font-size: 11px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 9rem;
+}
+.cal-clear { margin: 0; font-size: 13px; color: var(--text-faint); }
+.cal-connect {
+  display: inline-block;
+  margin-top: var(--space-3);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--text);
+}
+.cal-empty p { margin: 0 0 var(--space-2); font-size: 13px; }
+.cal-empty { padding: var(--space-4) 0; }
+.cal-loading, .gh-loading {
+  padding: var(--space-5) 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* GitHub activity widget */
+.gh-list { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; min-height: 0; }
+.gh-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+.gh-ago {
+  flex-shrink: 0;
+  width: 2.2rem;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.gh-body { flex: 1; min-width: 0; font-size: 13px; line-height: 1.4; }
+.gh-link { color: var(--text); text-decoration: none; }
+.gh-link:hover { text-decoration: underline; text-decoration-color: var(--text); }
+.gh-repo {
+  margin-left: var(--space-2);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+.gh-empty {
+  padding: var(--space-4) 0;
+  font-size: 13px;
+}
+.gh-empty p { margin: 0 0 var(--space-2); }
+
 /* Phone: collapse gridstack to a vertical stack. */
 @media (max-width: 720px) {
   .dashboard { padding: var(--space-3); }

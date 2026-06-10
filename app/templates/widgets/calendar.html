@@ -1,0 +1,79 @@
+{# Same lazy-load pattern as todo_asana: the dashboard includes this template
+   without context; the real state loads via HTMX on mount. #}
+{% if loaded is not defined %}
+<div class="widget cal">
+  <header class="widget-header">
+    <h3>Calendar</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="cal-loading muted"
+       hx-get="/widgets/calendar/render"
+       hx-trigger="load"
+       hx-target="closest .widget"
+       hx-swap="outerHTML">
+    Loading…
+  </div>
+</div>
+{% else %}
+<div class="widget cal">
+  <header class="widget-header">
+    <h3>Calendar</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+
+  {% if not configured %}
+    <div class="cal-empty">
+      <p>{{ provider_name }} credentials not configured.</p>
+      <p class="muted">Set <code>{{ config_hint }}</code> in the stack environment, and register this redirect URI with the provider:</p>
+      <p class="muted"><code>{{ redirect_uri }}</code></p>
+    </div>
+
+  {% elif account is none %}
+    <div class="cal-empty">
+      {% if error %}<div class="flash flash-err">{{ error }}</div>{% endif %}
+      <p class="muted">Glance at your {{ provider_name }} day from here.</p>
+      <a class="cal-connect" href="/widgets/calendar/{{ provider }}/connect">Connect {{ provider_name }}</a>
+    </div>
+
+  {% else %}
+    <div class="cal-account-bar muted">
+      {{ account }}
+      <form hx-get="/widgets/calendar/render"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline">
+        <button type="submit" class="link">refresh</button>
+      </form>
+      ·
+      <form hx-post="/widgets/calendar/disconnect"
+            hx-target="closest .widget"
+            hx-swap="outerHTML"
+            class="inline" method="post"
+            hx-confirm="Disconnect {{ provider_name }}? You can reconnect any time.">
+        <button type="submit" class="link">disconnect</button>
+      </form>
+    </div>
+    {% if error %}<div class="flash flash-err">{{ error }}</div>{% endif %}
+    <div class="cal-days">
+      {% for day in days %}
+      <section class="cal-day">
+        <h4 class="cal-day-head">{{ day.label }} <span class="cal-day-date">{{ day.date_label }}</span></h4>
+        {% if day.events %}
+        <ul class="cal-events">
+          {% for ev in day.events %}
+          <li class="cal-event{% if ev.all_day %} all-day{% endif %}">
+            <span class="cal-time">{{ ev.time_label }}</span>
+            <span class="cal-title">{{ ev.title }}</span>
+            {% if ev.location %}<span class="cal-loc">{{ ev.location }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="cal-clear muted">Clear.</p>
+        {% endif %}
+      </section>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endif %}
