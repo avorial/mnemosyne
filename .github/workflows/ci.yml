@@ -16,8 +16,8 @@ jobs:
     name: Resolve dependencies (clean, py3.12)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"   # matches the Dockerfile base
       # Fast signal: a full clean resolve. The v2.9 break was exactly this
@@ -30,7 +30,7 @@ jobs:
     name: Build the image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # The real thing: build the actual Dockerfile, running the same
       # `pip install -r requirements.txt` the Portainer deploy runs.
       - run: docker build -t mnemosyne-ci .
