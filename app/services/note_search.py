@@ -142,6 +142,12 @@ def _obsidianisms(text: str) -> str:
     return _WIKILINK_RE.sub(wikilink, _EMBED_RE.sub(embed, text))
 
 
+def read_raw(workspace: str, relpath: str) -> str:
+    """The file as it sits on disk, for the editor."""
+    f = resolve_in_vault(workspace, relpath, suffixes={".md"})
+    return f.read_text(encoding="utf-8", errors="replace")
+
+
 def read_note(workspace: str, relpath: str) -> Note:
     f = resolve_in_vault(workspace, relpath, suffixes={".md"})
     text = f.read_text(encoding="utf-8", errors="replace")

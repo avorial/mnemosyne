@@ -6,7 +6,7 @@ product
 
 ## Users
 
-One user — Patric. Uses Mnemosyne across the day from a desktop browser at home, a phone in transit, and occasionally a second laptop. Modes alternate between *capture* (5-second drop of a thought, image, link, or task) and *glance* (peripheral check of today's calendar, open todos, recent activity). A found note can be read back in place (search → open → read → back), but the *archive* (graph, backlinks, long-form browsing, editing) is Obsidian's job.
+One user — Patric. Uses Mnemosyne across the day from a desktop browser at home, a phone in transit, and occasionally a second laptop. Modes alternate between *capture* (5-second drop of a thought, image, link, or task) and *glance* (peripheral check of today's calendar, open todos, recent activity). A found note can be read back and lightly edited in place (search → open → read → fix a line → save); every save commits to the vault like any capture. Obsidian is the archive: graph, backlinks, long-form browsing, restructuring.
 
 ## Product Purpose
 

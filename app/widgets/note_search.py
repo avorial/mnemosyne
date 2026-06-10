@@ -13,12 +13,12 @@ from typing import Annotated
 
 import mimetypes
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app import auth
-from app.services import note_search
+from app.services import note_search, vault
 from app.widget_api import Widget, registry
 
 log = logging.getLogger("mnemosyne.widgets.note_search")
@@ -89,6 +89,57 @@ async def note(
     return templates.TemplateResponse(
         "widgets/_note_view.html",
         {"request": request, "workspace": workspace, "q": q, "note": n},
+    )
+
+
+@router.get("/edit", response_class=HTMLResponse)
+async def edit(
+    request: Request,
+    path: Annotated[str, Query()],
+    q: Annotated[str, Query()] = "",
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if (r := _auth(session)) is not None:
+        return r
+    workspace = _current_workspace(request)
+    try:
+        content = await asyncio.to_thread(note_search.read_raw, workspace, path)
+    except note_search.NoteNotFound:
+        return HTMLResponse(status_code=404, content="note not found")
+    return templates.TemplateResponse(
+        "widgets/_note_edit.html",
+        {"request": request, "workspace": workspace, "q": q, "path": path,
+         "content": content, "flash": None},
+    )
+
+
+@router.post("/save", response_class=HTMLResponse)
+async def save(
+    request: Request,
+    path: Annotated[str, Form()],
+    content: Annotated[str, Form()],
+    q: Annotated[str, Form()] = "",
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if (r := _auth(session)) is not None:
+        return r
+    workspace = _current_workspace(request)
+    try:
+        # Blocking git work stays off the event loop.
+        await asyncio.to_thread(vault.update_note, workspace, path, content)
+    except vault.VaultError as e:
+        log.exception("note save failed")
+        # Hand the edited content back so nothing is lost.
+        return templates.TemplateResponse(
+            "widgets/_note_edit.html",
+            {"request": request, "workspace": workspace, "q": q, "path": path,
+             "content": content, "flash": {"kind": "err", "message": f"Save failed: {e}"}},
+        )
+    n = await asyncio.to_thread(note_search.read_note, workspace, path)
+    return templates.TemplateResponse(
+        "widgets/_note_view.html",
+        {"request": request, "workspace": workspace, "q": q, "note": n,
+         "flash": {"kind": "ok", "message": "Saved and committed"}},
     )
 
 

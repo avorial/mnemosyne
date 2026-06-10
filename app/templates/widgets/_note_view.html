@@ -1,12 +1,23 @@
 {# Replaces the results pane (same element id) so Back swaps cleanly. #}
 <div class="ns-results" id="ns-results-{{ workspace }}">
   <div class="ns-note">
-    <form class="inline"
-          hx-get="/widgets/note_search/search?q={{ q|urlencode }}"
-          hx-target="#ns-results-{{ workspace }}"
-          hx-swap="outerHTML">
-      <button type="submit" class="link ns-back">Back to results</button>
-    </form>
+    {% if flash %}
+      <div class="flash flash-{{ flash.kind }}" data-autohide="3500">{{ flash.message }}</div>
+    {% endif %}
+    <div class="ns-note-bar">
+      <form class="inline"
+            hx-get="/widgets/note_search/search?q={{ q|urlencode }}"
+            hx-target="#ns-results-{{ workspace }}"
+            hx-swap="outerHTML">
+        <button type="submit" class="link ns-back">Back to results</button>
+      </form>
+      <form class="inline"
+            hx-get="/widgets/note_search/edit?path={{ note.relpath|urlencode }}&q={{ q|urlencode }}"
+            hx-target="#ns-results-{{ workspace }}"
+            hx-swap="outerHTML">
+        <button type="submit" class="link ns-back">Edit</button>
+      </form>
+    </div>
     <h4 class="ns-note-title">{{ note.title }}</h4>
     <p class="ns-meta"><span class="ns-path">{{ note.relpath }}</span> · {{ note.modified }}</p>
     <div class="ns-note-body">{{ note.html|safe }}</div>

@@ -1,0 +1,26 @@
+{# Replaces the results pane (same element id), like the reader. #}
+<div class="ns-results" id="ns-results-{{ workspace }}">
+  <div class="ns-note">
+    {% if flash %}
+      <div class="flash flash-{{ flash.kind }}">{{ flash.message }}</div>
+    {% endif %}
+    <form class="widget-form ns-edit-form"
+          hx-post="/widgets/note_search/save"
+          hx-target="#ns-results-{{ workspace }}"
+          hx-swap="outerHTML"
+          method="post">
+      <input type="hidden" name="path" value="{{ path }}">
+      <input type="hidden" name="q" value="{{ q }}">
+      <p class="ns-meta"><span class="ns-path">{{ path }}</span></p>
+      <textarea name="content" class="ns-editor" spellcheck="false">{{ content }}</textarea>
+      <div class="widget-actions">
+        <button type="button" class="link ns-back"
+                hx-get="/widgets/note_search/note?path={{ path|urlencode }}&q={{ q|urlencode }}"
+                hx-target="#ns-results-{{ workspace }}"
+                hx-swap="outerHTML">Cancel</button>
+        <span class="muted save-hint">Shift+Enter to save</span>
+        <button type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>

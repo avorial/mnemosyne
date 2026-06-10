@@ -1038,12 +1038,31 @@ form.inline { display: inline; }
 /* Inline note reader. Serif for thought: the one surface in the app
    where you read, so it speaks in the reading voice. */
 .ns-note { padding-bottom: var(--space-2); }
+.ns-note-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
 .ns-back {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
+
+/* Editor: operating on text, so it speaks mono. */
+.ns-edit-form { flex: none; }
+.ns-editor {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 240px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  background: oklch(0.11 0.02 295 / 0.5);
+}
+.ns-editor:focus { border-color: var(--gold); }
 .ns-note-title {
   margin: var(--space-3) 0 var(--space-1);
   font-family: var(--font-display);

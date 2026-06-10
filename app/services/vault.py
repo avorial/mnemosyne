@@ -333,6 +333,31 @@ def write_bookmark(
     return abs_path
 
 
+def update_note(workspace: str, relpath: str, content: str) -> Path:
+    """Overwrite an existing markdown note and commit. Edit, not create:
+    refuses paths outside the vault, non-.md files, and missing notes."""
+    spec = _resolve(workspace)
+    _ensure(spec)
+    root = spec.path.resolve()
+    abs_path = (root / relpath).resolve()
+    if not abs_path.is_relative_to(root):
+        raise VaultError(f"path escapes the vault: {relpath!r}")
+    if abs_path.suffix.lower() != ".md":
+        raise VaultError(f"not a markdown note: {relpath!r}")
+    if not abs_path.is_file():
+        raise VaultError(f"no such note: {relpath}")
+    # Keep "Save failed" honest: if the commit doesn't land, the file on
+    # disk must be exactly what it was before the attempt.
+    original = abs_path.read_text(encoding="utf-8", errors="replace")
+    abs_path.write_text(content.replace("\r\n", "\n"), encoding="utf-8")
+    try:
+        _commit_and_push(spec, f"edit: {relpath}")
+    except VaultError:
+        abs_path.write_text(original, encoding="utf-8")
+        raise
+    return abs_path
+
+
 def _commit_and_push(spec: WorkspaceSpec, message: str) -> None:
     _run_git(spec, "add", ".")
     status = _run_git(spec, "status", "--porcelain")
