@@ -1,0 +1,35 @@
+{# Lazy-load pattern, same as the other stateful widgets. #}
+{% if loaded is not defined %}
+<div class="widget note-search">
+  <header class="widget-header">
+    <h3>Search Notes</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <div class="ns-loading muted"
+       hx-get="/widgets/note_search/render"
+       hx-trigger="load"
+       hx-target="closest .widget"
+       hx-swap="outerHTML">
+    Loading…
+  </div>
+</div>
+{% else %}
+<div class="widget note-search">
+  <header class="widget-header">
+    <h3>Search Notes</h3>
+    <span class="ws-tag">{{ workspace }}</span>
+  </header>
+  <input type="search"
+         class="ns-input"
+         name="q"
+         value="{{ q or '' }}"
+         placeholder="Search the vault…"
+         autocomplete="off"
+         spellcheck="false"
+         hx-get="/widgets/note_search/search"
+         hx-trigger="keyup changed delay:350ms, search"
+         hx-target="#ns-results-{{ workspace }}"
+         hx-swap="outerHTML">
+  {% include "widgets/_note_results.html" %}
+</div>
+{% endif %}

@@ -1,0 +1,17 @@
+<div class="ns-results" id="ns-results-{{ workspace }}">
+  {% if hits is none %}
+    <p class="ns-hint muted">Daily notes, inbox drops, and links. Newest first.</p>
+  {% elif hits %}
+    <ul class="ns-list">
+      {% for h in hits %}
+      <li class="ns-item">
+        <span class="ns-title">{{ h.title }}</span>
+        <p class="ns-snippet">{{ h.pre }}{% if h.match %}<mark>{{ h.match }}</mark>{% endif %}{{ h.post }}</p>
+        <p class="ns-meta"><span class="ns-path">{{ h.relpath }}</span> · {{ h.modified }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="ns-empty">Nothing in the vault matches "{{ q }}".</p>
+  {% endif %}
+</div>
