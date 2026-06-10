@@ -10,3 +10,4 @@ httpx==0.28.1
 tzdata==2025.2
 icalendar==7.1.2
 recurring-ical-events==3.8.2
+markdown==3.10.2

@@ -1017,6 +1017,100 @@ form.inline { display: inline; }
   overflow-wrap: anywhere;
 }
 
+/* Result rows are buttons that open the note in place. */
+.ns-open {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font);
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.ns-open:hover { background: transparent; border-color: transparent; color: inherit; }
+.ns-open:hover .ns-title { color: var(--gold-bright); }
+.ns-open .ns-snippet { display: -webkit-box; margin-bottom: var(--space-1); }
+.ns-open .ns-meta { display: block; }
+
+/* Inline note reader. Serif for thought: the one surface in the app
+   where you read, so it speaks in the reading voice. */
+.ns-note { padding-bottom: var(--space-2); }
+.ns-back {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.ns-note-title {
+  margin: var(--space-3) 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 380;
+  letter-spacing: -0.005em;
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+}
+.ns-note-body {
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 11, "SOFT" 30;
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 65ch;
+  overflow-wrap: anywhere;
+}
+.ns-note-body h1, .ns-note-body h2, .ns-note-body h3, .ns-note-body h4 {
+  font-family: var(--font-display);
+  font-weight: 450;
+  font-variation-settings: "opsz" 60, "SOFT" 50;
+  line-height: 1.2;
+  margin: var(--space-4) 0 var(--space-2);
+}
+.ns-note-body h1 { font-size: 19px; }
+.ns-note-body h2 { font-size: 17px; }
+.ns-note-body h3, .ns-note-body h4 { font-size: 16px; }
+.ns-note-body p { margin: 0 0 var(--space-3); }
+.ns-note-body ul, .ns-note-body ol { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
+.ns-note-body li { margin-bottom: var(--space-1); }
+.ns-note-body blockquote {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--border-strong);
+  color: var(--text-quiet);
+}
+.ns-note-body code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--surface-2);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+}
+.ns-note-body pre {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  overflow-x: auto;
+  margin: 0 0 var(--space-3);
+}
+.ns-note-body pre code { background: transparent; padding: 0; }
+.ns-note-body a { color: var(--text); }
+.ns-note-body img.ns-embed {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin: var(--space-2) 0;
+}
+.ns-note-body table { border-collapse: collapse; margin: 0 0 var(--space-3); font-size: 14px; }
+.ns-note-body th, .ns-note-body td {
+  border: 1px solid var(--border);
+  padding: var(--space-1) var(--space-3);
+  text-align: left;
+}
+.ns-wikilink { color: var(--text-quiet); border-bottom: 1px dotted var(--border-strong); }
+
 /* Phone: collapse gridstack to a vertical stack. */
 @media (max-width: 720px) {
   .dashboard { padding: var(--space-3); }

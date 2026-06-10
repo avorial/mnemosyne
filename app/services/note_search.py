@@ -2,8 +2,9 @@
 
 Scans the workspace's checkout directly (no index to maintain, no extra
 state): newest files first, all query terms must match (AND, case
-insensitive), stop as soon as enough hits exist. Reading the note still
-happens in Obsidian; this returns just enough snippet to recognize it.
+insensitive), stop as soon as enough hits exist. A hit can be opened
+for a quick read-back in place; the archive (graph, backlinks, long-form
+browsing) stays Obsidian's job.
 """
 
 from __future__ import annotations
@@ -13,6 +14,11 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+from urllib.parse import quote
+
+import markdown as md
+from markupsafe import escape
 
 from app.services import vault
 from app.services.calendar_types import local_tz
@@ -77,6 +83,90 @@ def _snippet(text: str, term: str) -> tuple[str, str, str]:
     pre = ("…" if start > 0 else "") + text[start:i]
     post = text[i + len(term):end] + ("…" if end < len(text) else "")
     return pre, text[i:i + len(term)], post
+
+
+class NoteNotFound(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class Note:
+    relpath: str
+    title: str
+    modified: str
+    html: str       # rendered, safe to mark |safe in the template
+
+
+def resolve_in_vault(workspace: str, relpath: str, *, suffixes: set[str] | None = None) -> Path:
+    """Resolve a vault-relative path, refusing anything that escapes the
+    vault root (traversal, absolute paths, symlink tricks)."""
+    spec = vault.WORKSPACES.get(workspace)
+    if spec is None:
+        raise NoteNotFound(f"unknown workspace {workspace!r}")
+    root = spec.path.resolve()
+    candidate = (root / relpath).resolve()
+    if not candidate.is_relative_to(root):
+        raise NoteNotFound("path escapes the vault")
+    if not candidate.is_file():
+        raise NoteNotFound(f"no such file: {relpath}")
+    if suffixes is not None and candidate.suffix.lower() not in suffixes:
+        raise NoteNotFound(f"refusing {candidate.suffix!r}")
+    return candidate
+
+
+_EMBED_RE = re.compile(r"!\[\[([^\]|]+?)(?:\|[^\]]*)?\]\]")
+_WIKILINK_RE = re.compile(r"\[\[([^\]|]+?)(?:\|([^\]]*))?\]\]")
+_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp"}
+
+
+def _obsidianisms(text: str) -> str:
+    """Translate vault syntax before markdown rendering.
+
+    Image embeds become real <img> tags served through the authenticated
+    attachment route; other embeds and wikilinks become styled spans
+    (the linked note lives in Obsidian, we don't pretend otherwise).
+    """
+    def embed(m: re.Match) -> str:
+        target = m.group(1).strip()
+        if Path(target).suffix.lower() in _IMAGE_EXTS:
+            return (
+                f'<img class="ns-embed" loading="lazy" alt="{escape(target)}" '
+                f'src="/widgets/note_search/attachment?path={quote(target)}">'
+            )
+        return f'<span class="ns-wikilink">{escape(target)}</span>'
+
+    def wikilink(m: re.Match) -> str:
+        label = (m.group(2) or m.group(1)).strip()
+        return f'<span class="ns-wikilink">{escape(label)}</span>'
+
+    return _WIKILINK_RE.sub(wikilink, _EMBED_RE.sub(embed, text))
+
+
+def read_note(workspace: str, relpath: str) -> Note:
+    f = resolve_in_vault(workspace, relpath, suffixes={".md"})
+    text = f.read_text(encoding="utf-8", errors="replace")
+    body = _FRONTMATTER_RE.sub("", text)
+    title = _title_of(text, f)
+    # The reader shows the title itself; drop the note's first heading
+    # when it says the same thing, so it doesn't read twice.
+    body = re.sub(rf"\A\s*#+\s*{re.escape(title)}\s*\n", "", body, count=1)
+    # Notes are trusted-ish (self-authored), but fetched link descriptions
+    # pass through them: neutralize raw HTML before rendering, then
+    # re-inject our own embed/wikilink tags. Only & and < get escaped;
+    # a literal > must survive so blockquote syntax still works.
+    neutralized = body.replace("&", "&amp;").replace("<", "&lt;")
+    rendered = md.markdown(
+        _obsidianisms(neutralized),
+        extensions=["fenced_code", "tables", "sane_lists", "nl2br"],
+    )
+    tz = local_tz()
+    dt = datetime.fromtimestamp(f.stat().st_mtime, tz)
+    return Note(
+        relpath=relpath,
+        title=title,
+        modified=f"{dt.strftime('%b')} {dt.day}, {dt.year}",
+        html=rendered,
+    )
 
 
 def search(workspace: str, query: str, limit: int = MAX_RESULTS) -> list[Hit]:

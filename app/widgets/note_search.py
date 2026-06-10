@@ -11,8 +11,10 @@ import logging
 from pathlib import Path
 from typing import Annotated
 
+import mimetypes
+
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app import auth
@@ -68,6 +70,43 @@ async def search(
         "widgets/_note_results.html",
         {"request": request, "workspace": workspace, "q": q, "hits": hits},
     )
+
+
+@router.get("/note", response_class=HTMLResponse)
+async def note(
+    request: Request,
+    path: Annotated[str, Query()],
+    q: Annotated[str, Query()] = "",
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> HTMLResponse:
+    if (r := _auth(session)) is not None:
+        return r
+    workspace = _current_workspace(request)
+    try:
+        n = await asyncio.to_thread(note_search.read_note, workspace, path)
+    except note_search.NoteNotFound:
+        return HTMLResponse(status_code=404, content="note not found")
+    return templates.TemplateResponse(
+        "widgets/_note_view.html",
+        {"request": request, "workspace": workspace, "q": q, "note": n},
+    )
+
+
+@router.get("/attachment")
+async def attachment(
+    request: Request,
+    path: Annotated[str, Query()],
+    session: auth.Session | None = Depends(auth.session_from_request),
+) -> Response:
+    if session is None:
+        return Response(status_code=401)
+    workspace = _current_workspace(request)
+    try:
+        f = note_search.resolve_in_vault(workspace, path)
+    except note_search.NoteNotFound:
+        return Response(status_code=404)
+    media_type = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
+    return FileResponse(f, media_type=media_type)
 
 
 widget = Widget(

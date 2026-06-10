@@ -37,7 +37,7 @@ Widget tiles are translucent gradients over the page (`oklch(0.19 0.038 295 / 0.
 
 Three voices, each with one job:
 
-- **Fraunces** (variable: opsz, wght, SOFT) — the moments that speak: wordmark, login h1, empty-state h2, and widget titles. Wordmark is uppercase, tracked 0.18em, the same gesture as the avorial.com logotype. Widget titles run 19px at weight 380, `opsz 144, SOFT 50`.
+- **Fraunces** (variable: opsz, wght, SOFT) — the moments that speak: wordmark, login h1, empty-state h2, widget titles, and the note reader's body (`.ns-note-body`, low optical size). The reader is the one surface in the app where you *read*, so it carries the reading voice; PRODUCT principle 5 made this rule before the surface existed. Wordmark is uppercase, tracked 0.18em, the same gesture as the avorial.com logotype. Widget titles run 19px at weight 380, `opsz 144, SOFT 50`.
 - **Geist** — everything the user reads or types. Body, inputs, list content, menu items.
 - **Geist Mono** — everything that labels or operates. Buttons, workspace toggle, tags, times, dates, ago-stamps, hints, section labels. Always small (10–11px), uppercase, tracked 0.08–0.22em.
 
@@ -110,7 +110,7 @@ Sharp, like the studio site: 2px on buttons, chips, menus; 4px on widget tiles a
 - No "Welcome back, Patric."
 - No hero-metric tiles.
 - No icon + heading + paragraph card pattern.
-- No Fraunces in buttons, labels, data, or list rows. Serif speaks; it does not operate.
+- No Fraunces in buttons, labels, data, or list rows. Serif speaks and is read; it does not operate.
 - No purple fills outside the one commit button per widget.
 - No gold fills, ever. Gold is lines, edges, and text only.
 - No saturated category colors (productivity blue, calendar green).

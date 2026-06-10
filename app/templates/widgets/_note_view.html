@@ -1,0 +1,14 @@
+{# Replaces the results pane (same element id) so Back swaps cleanly. #}
+<div class="ns-results" id="ns-results-{{ workspace }}">
+  <div class="ns-note">
+    <form class="inline"
+          hx-get="/widgets/note_search/search?q={{ q|urlencode }}"
+          hx-target="#ns-results-{{ workspace }}"
+          hx-swap="outerHTML">
+      <button type="submit" class="link ns-back">Back to results</button>
+    </form>
+    <h4 class="ns-note-title">{{ note.title }}</h4>
+    <p class="ns-meta"><span class="ns-path">{{ note.relpath }}</span> · {{ note.modified }}</p>
+    <div class="ns-note-body">{{ note.html|safe }}</div>
+  </div>
+</div>

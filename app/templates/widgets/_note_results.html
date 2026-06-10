@@ -5,9 +5,14 @@
     <ul class="ns-list">
       {% for h in hits %}
       <li class="ns-item">
-        <span class="ns-title">{{ h.title }}</span>
-        <p class="ns-snippet">{{ h.pre }}{% if h.match %}<mark>{{ h.match }}</mark>{% endif %}{{ h.post }}</p>
-        <p class="ns-meta"><span class="ns-path">{{ h.relpath }}</span> · {{ h.modified }}</p>
+        <button type="button" class="ns-open"
+                hx-get="/widgets/note_search/note?path={{ h.relpath|urlencode }}&q={{ q|urlencode }}"
+                hx-target="#ns-results-{{ workspace }}"
+                hx-swap="outerHTML">
+          <span class="ns-title">{{ h.title }}</span>
+          <span class="ns-snippet">{{ h.pre }}{% if h.match %}<mark>{{ h.match }}</mark>{% endif %}{{ h.post }}</span>
+          <span class="ns-meta"><span class="ns-path">{{ h.relpath }}</span> · {{ h.modified }}</span>
+        </button>
       </li>
       {% endfor %}
     </ul>
